@@ -77,3 +77,68 @@ empty space. Crisp pixels, limited palette, 1px dark outline, no anti-aliasing, 
   `isolated character, game asset, sprite on chroma key magenta background`.
 - Se o rosto não lembrar a pessoa, descreva mais os traços (formato do rosto, sobrancelhas,
   nariz) em vez de usar o nome: muitos geradores bloqueiam ou distorcem nomes de políticos.
+
+---
+
+# Sprites do piloto no kart (estilo Mario Kart)
+
+Opcionais, como os de luta. Sem eles, o estilo Mario Kart desenha o kart e o piloto pelo código.
+Salve como:
+
+- `src/img/sprites/lula-kart.png`
+- `src/img/sprites/flavio-kart.png`
+
+## Formato
+
+- **Tira horizontal** de quadros **quadrados** (ex.: 4 quadros de 48×48 = imagem 192×48).
+- Kart de **perfil, andando para a DIREITA**, nos **dois** sprites: na corrida os dois vão na
+  mesma direção, então o do Flávio **não** é espelhado como o sprite de luta.
+- As rodas encostando na borda de baixo; o kart ocupando a largura quase toda do quadro.
+- Fundo **transparente** ou **magenta puro `#FF00FF`**.
+- Sem fogo do turbo, poeira nem itens: isso é desenhado pelo código e muda com os votos.
+- Os quadros animam as rodas girando e o piloto balançando de leve.
+
+Mesma dica de antes: gere grande, recorte os quadros e reduza para 48×48 com *nearest neighbor*.
+
+## Prompt 3: Lula no kart
+
+```
+Pixel art sprite sheet, 16-bit SNES kart racing game style, 4 animation frames arranged in a
+single horizontal row, each frame a perfect square of identical size, evenly spaced, no gaps,
+no borders, no text, no labels.
+
+Subject: a small go-kart seen from the side, driving to the RIGHT, painted red with darker red
+trim. Driving it, seated, a caricature of an elderly Brazilian man: short white-gray hair, full
+short white beard, rectangular dark glasses, warm tan skin, navy blue suit, white shirt, red
+tie, both hands on the steering wheel, cheerful and determined expression.
+
+Animation: the 4 frames show the wheels spinning and a slight bounce of the driver.
+
+Constraints: wheels touching the bottom edge of each frame, kart filling most of the frame
+width, character and kart centered horizontally. NO exhaust flames, NO smoke, NO dust, NO
+items, NO road, NO shadow. Flat solid magenta background (#FF00FF) filling all empty space.
+Crisp pixels, limited palette, 1px dark outline, no anti-aliasing, no gradients.
+```
+
+## Prompt 4: Flávio Bolsonaro no kart
+
+```
+Pixel art sprite sheet, 16-bit SNES kart racing game style, 4 animation frames arranged in a
+single horizontal row, each frame a perfect square of identical size, evenly spaced, no gaps,
+no borders, no text, no labels.
+
+Subject: a small go-kart seen from the side, driving to the RIGHT, painted blue with darker
+blue trim. Driving it, seated, a caricature of a Brazilian man in his mid-40s: short dark brown
+hair combed to the side, clean-shaven, light skin, dark charcoal suit, white shirt, green tie
+with a thin yellow stripe, both hands on the steering wheel, serious and determined expression.
+
+Animation: the 4 frames show the wheels spinning and a slight bounce of the driver.
+
+Constraints: wheels touching the bottom edge of each frame, kart filling most of the frame
+width, character and kart centered horizontally. NO exhaust flames, NO smoke, NO dust, NO
+items, NO road, NO shadow. Flat solid magenta background (#FF00FF) filling all empty space.
+Crisp pixels, limited palette, 1px dark outline, no anti-aliasing, no gradients.
+```
+
+> Os dois karts precisam estar virados para a direita. Se o gerador desenhar algum para a
+> esquerda, espelhe a imagem antes de salvar.
