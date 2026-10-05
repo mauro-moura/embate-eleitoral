@@ -224,7 +224,6 @@ function renderEstados() {
 const canvas = $('arena');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height, CHAO = 138;
-const X_ESQ = 46, X_DIR = W - 46;
 
 const cena = {
   alvo: 0.5,     // fatia do lutador da esquerda entre os dois (0..1)
@@ -232,6 +231,7 @@ const cena = {
   vivo: false,   // false até chegar o primeiro dado
   particulas: [],
   sprites: { esquerda: null, direita: null },
+  estilo: 'kamehameha',
 };
 
 // Carrega sprite opcional; magenta (#FF00FF) vira transparente (chroma key).
@@ -258,47 +258,9 @@ function carregarSprite(src) {
   });
 }
 
-// --- Cenário (desenhado uma vez) ---
-const fundo = document.createElement('canvas');
-fundo.width = W; fundo.height = H;
-(function desenharFundo() {
-  const g = fundo.getContext('2d');
-  const faixas = ['#0b0d24', '#141641', '#1f1d57', '#2f2266', '#47286e', '#6a2f6c', '#8f3a62'];
-  const alt = Math.ceil(100 / faixas.length);
-  faixas.forEach((c, i) => { g.fillStyle = c; g.fillRect(0, i * alt, W, alt); });
-  let seed = 7;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  g.fillStyle = '#fff';
-  for (let i = 0; i < 50; i++) g.fillRect(Math.floor(rnd() * W), Math.floor(rnd() * 60), 1, 1);
-  // montanhas
-  g.fillStyle = '#2a1f4a';
-  for (let x = 0; x < W; x++) {
-    const h = 22 + Math.sin(x * 0.045) * 9 + Math.sin(x * 0.13) * 4;
-    g.fillRect(x, 100 - h, 1, h + 40);
-  }
-  g.fillStyle = '#1c1636';
-  for (let x = 0; x < W; x++) {
-    const h = 12 + Math.sin(x * 0.07 + 2) * 6 + Math.sin(x * 0.21) * 2;
-    g.fillRect(x, 112 - h, 1, h + 40);
-  }
-  // bandeira do Brasil ao fundo
-  const bx = W / 2 - 15, by = 18;
-  g.fillStyle = '#555'; g.fillRect(bx - 2, by, 1, 50);
-  g.fillStyle = '#119c3f'; g.fillRect(bx, by, 30, 20);
-  g.fillStyle = '#ffd23f';
-  g.beginPath(); g.moveTo(bx + 15, by + 2); g.lineTo(bx + 28, by + 10); g.lineTo(bx + 15, by + 18); g.lineTo(bx + 2, by + 10); g.fill();
-  g.fillStyle = '#1b3b9a'; g.beginPath(); g.arc(bx + 15, by + 10, 5, 0, Math.PI * 2); g.fill();
-  g.fillStyle = '#fff'; g.fillRect(bx + 10, by + 9, 10, 1);
-  // chão
-  g.fillStyle = '#3b3550'; g.fillRect(0, CHAO, W, H - CHAO);
-  g.fillStyle = '#4f4868'; g.fillRect(0, CHAO, W, 2);
-  g.fillStyle = '#2d2840';
-  for (let x = 0; x < W; x += 16) g.fillRect(x + ((x / 16) % 2) * 8, CHAO + 8, 8, 2);
-  for (let x = 4; x < W; x += 24) g.fillRect(x, CHAO + 16, 10, 2);
-})();
-
 // --- Lutador procedural (virado para a direita quando dir = 1) ---
-function desenharLutador(v, x, dir, braco, grossura, t) {
+// pose 'dois': os dois braços à frente; 'um': só o da frente, o outro recolhido.
+function desenharLutador(v, x, dir, braco, grossura, t, pose) {
   const bob = Math.round(Math.sin(t * 7 + (dir > 0 ? 0 : 1.5)) * 0.8);
   const y = CHAO;
   const r = (dx, dy, w, h, c) => {
@@ -330,7 +292,12 @@ function desenharLutador(v, x, dir, braco, grossura, t) {
   if (v.oculos) { r(3, by(-48), 4, 1, '#222'); r(3, by(-47), 1, 1, '#222'); r(6, by(-47), 1, 1, '#222'); }
   // braços estendidos: COMPRIMENTO e GROSSURA dependem da porcentagem
   r(3, by(-35), braco, grossura, v.terno);
-  r(3, by(-35 + grossura), braco, Math.max(2, grossura - 1), v.ternoEsc);
+  if (pose === 'um') {
+    r(-11, by(-35), 4, 10, v.ternoEsc); // braço de trás, recolhido
+    r(-11, by(-25), 4, 3, v.peleEsc);
+  } else {
+    r(3, by(-35 + grossura), braco, Math.max(2, grossura - 1), v.ternoEsc);
+  }
   r(3 + braco, by(-36), 4, grossura * 2 + 1, v.pele);
   r(3 + braco + 3, by(-35), 1, grossura * 2 - 1, v.peleEsc);
   return { x: x + dir * (3 + braco + 5), y: y + by(-35 + grossura) };
@@ -347,21 +314,6 @@ function desenharSprite(s, x, dir, escala, t) {
   ctx.restore();
   // mãos assumidas na borda frontal, ~55% da altura
   return { x: x + dir * (tam / 2 - 4), y: CHAO - tam * 0.55 };
-}
-
-// --- Rajada de energia de (x0) até (x1) ---
-function desenharRajada(x0, x1, y, grossura, cfg, t) {
-  const ini = Math.min(x0, x1), fim = Math.max(x0, x1);
-  for (let x = ini; x < fim; x += 2) {
-    const onda = Math.sin(x * 0.35 - t * 30 * Math.sign(x1 - x0)) * 1.2;
-    const h = grossura + onda;
-    ctx.fillStyle = cfg.escura; ctx.fillRect(x, Math.round(y - h / 2 - 2), 2, Math.round(h + 4));
-    ctx.fillStyle = cfg.cor; ctx.fillRect(x, Math.round(y - h / 2), 2, Math.round(h));
-    ctx.fillStyle = cfg.clara; ctx.fillRect(x, Math.round(y - h / 4), 2, Math.max(1, Math.round(h / 2)));
-  }
-  // bola nas mãos
-  const rb = grossura / 2 + 2 + Math.sin(t * 25) * 0.8;
-  bola(x0, y, rb, cfg);
 }
 
 function bola(x, y, raio, cfg) {
@@ -387,50 +339,66 @@ function aura(x, cfg, forca, t) {
   ctx.globalAlpha = 1;
 }
 
+// --- Estilo do embate (src/js/estilos/*.js) ---
+const ESTILOS = window.ESTILOS;
+const fundos = {};
+function fundoDo(id) {
+  if (!fundos[id]) {
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    ESTILOS[id].fundo(c.getContext('2d'), { W, H, CHAO });
+    fundos[id] = c;
+  }
+  return fundos[id];
+}
+
+// Medidas do lutador para a fatia p (0..1) dele: braço de 4 a 26px, grossura de 2 a 6.
+const medidas = (p) => ({ braco: Math.round(4 + 22 * p), grossura: Math.round(2 + 4 * p), escala: 0.85 + 0.3 * p });
+
+// Ferramentas que os estilos recebem a cada quadro.
+const api = {
+  ctx, W, H, CHAO,
+  t: 0, pL: 0.5, pF: 0.5, vivo: false,
+  esq: CFG.esquerda, dir: CFG.direita,
+  // Desenha o lutador ('esquerda' ou 'direita') com os pés em x; devolve onde fica a mão da frente.
+  lutador(lado, x, p) {
+    const dir = lado === 'esquerda' ? 1 : -1;
+    const m = medidas(p);
+    const sprite = cena.sprites[lado];
+    return sprite
+      ? desenharSprite(sprite, x, dir, m.escala, api.t)
+      : desenharLutador(CFG[lado].visual, x, dir, m.braco, m.grossura, api.t, ESTILOS[cena.estilo].pose);
+  },
+  // Distância horizontal entre os pés (x) e a mão da frente.
+  alcance(lado, p) {
+    const m = medidas(p);
+    return cena.sprites[lado] ? Math.round(64 * m.escala) / 2 - 4 : m.braco + 8;
+  },
+  aura: (x, cfg, forca) => aura(x, cfg, forca, api.t),
+  bola: (x, y, raio, cores) => bola(x, y, raio, cores),
+  faisca(x, y, cor, forca = 1) {
+    const a = Math.random() * Math.PI * 2, vel = (0.6 + Math.random() * 1.8) * forca;
+    cena.particulas.push({ x, y, vx: Math.cos(a) * vel, vy: Math.sin(a) * vel - 0.3, vida: 30 + Math.random() * 20, cor });
+  },
+  linha(x0, y0, x1, y1, cor) {
+    ctx.fillStyle = cor;
+    const passos = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+    for (let i = 0; i <= passos; i++) {
+      ctx.fillRect(Math.round(x0 + (x1 - x0) * i / passos), Math.round(y0 + (y1 - y0) * i / passos), 1, 1);
+    }
+  },
+};
+
 const t0 = performance.now();
 function quadro() {
-  const t = (performance.now() - t0) / 1000;
+  api.t = (performance.now() - t0) / 1000;
   cena.p += (cena.alvo - cena.p) * 0.03;
-  const pL = cena.p, pF = 1 - cena.p;
+  api.pL = cena.p; api.pF = 1 - cena.p; api.vivo = cena.vivo;
 
-  const tremor = cena.vivo ? Math.round(Math.sin(t * 45) * 0.6) : 0;
+  const tremor = cena.vivo ? Math.round(Math.sin(api.t * 45) * 0.6) : 0;
   ctx.setTransform(1, 0, 0, 1, tremor, 0);
-  ctx.drawImage(fundo, 0, 0);
-
-  aura(X_ESQ, CFG.esquerda, pL, t);
-  aura(X_DIR, CFG.direita, pF, t + 1);
-
-  // Braço vai de 4px (0%) a 26px (100% entre os dois); grossura de 2 a 6.
-  const bracoL = Math.round(4 + 22 * pL), bracoF = Math.round(4 + 22 * pF);
-  const grossL = Math.round(2 + 4 * pL), grossF = Math.round(2 + 4 * pF);
-
-  const mL = cena.sprites.esquerda
-    ? desenharSprite(cena.sprites.esquerda, X_ESQ, 1, 0.85 + 0.3 * pL, t)
-    : desenharLutador(CFG.esquerda.visual, X_ESQ, 1, bracoL, grossL, t);
-  const mF = cena.sprites.direita
-    ? desenharSprite(cena.sprites.direita, X_DIR, -1, 0.85 + 0.3 * pF, t)
-    : desenharLutador(CFG.direita.visual, X_DIR, -1, bracoF, grossF, t);
-
-  if (cena.vivo) {
-    const yB = Math.round((mL.y + mF.y) / 2);
-    // Ponto de choque: quem tem mais voto empurra o encontro para o lado do outro.
-    const choque = Math.round(mL.x + (mF.x - mL.x) * pL + Math.sin(t * 3) * 1.5);
-    desenharRajada(mL.x, choque, yB, 3 + 9 * pL, CFG.esquerda, t);
-    desenharRajada(mF.x, choque, yB, 3 + 9 * pF, CFG.direita, t);
-
-    // explosão no ponto de choque
-    const rc = 8 + Math.sin(t * 18) * 2;
-    ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(choque, yB, rc + 6, 0, Math.PI * 2); ctx.fill();
-    bola(choque, yB, rc, { escura: '#ffb000', cor: '#fff3a0' });
-
-    for (let i = 0; i < 3; i++) {
-      const a = Math.random() * Math.PI * 2, vel = 0.6 + Math.random() * 1.8;
-      cena.particulas.push({
-        x: choque, y: yB, vx: Math.cos(a) * vel, vy: Math.sin(a) * vel - 0.3, vida: 30 + Math.random() * 20,
-        cor: [CFG.esquerda.clara, CFG.direita.clara, '#fff', '#ffd23f'][i % 4],
-      });
-    }
-  }
+  ctx.drawImage(fundoDo(cena.estilo), 0, 0);
+  ESTILOS[cena.estilo].quadro(api);
 
   cena.particulas = cena.particulas.filter((s) => s.vida-- > 0);
   for (const s of cena.particulas) {
@@ -458,7 +426,7 @@ function iniciarLoop(win) {
 // ---------------------------------------------------------------------------
 async function abrirWidget() {
   if (!('documentPictureInPicture' in window)) {
-    window.open('?widget', 'embate-widget', 'popup,width=480,height=270');
+    window.open(`?widget&estilo=${cena.estilo}`, 'embate-widget', 'popup,width=480,height=270');
     const dica = $('dica-widget');
     dica.textContent = window.isSecureContext
       ? 'Este navegador não tem janela flutuante (só Chrome/Edge 116+). Abri um popup comum. '
@@ -505,9 +473,9 @@ async function abrirWidget() {
 // ---------------------------------------------------------------------------
 // Início
 // ---------------------------------------------------------------------------
-document.querySelectorAll('.turnos button').forEach((btn) => {
+document.querySelectorAll('[data-turno]').forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.turnos button').forEach((b) => b.classList.toggle('ativo', b === btn));
+    document.querySelectorAll('[data-turno]').forEach((b) => b.classList.toggle('ativo', b === btn));
     estado.escolha = btn.dataset.turno;
     carregar();
   });
@@ -538,7 +506,28 @@ for (const k of ['esquerda', 'direita']) {
   }
 }
 $('ano').textContent = CFG.ano;
-canvas.setAttribute('aria-label', `${CFG.esquerda.nome} e ${CFG.direita.nome} disparando rajadas de energia um contra o outro`);
+// Estilo: ?estilo= na URL (widget, links) > último escolhido neste navegador > kamehameha.
+function escolherEstilo(id) {
+  if (!ESTILOS[id]) id = 'kamehameha';
+  cena.estilo = id;
+  canvas.setAttribute('aria-label', `${CFG.esquerda.nome} e ${CFG.direita.nome} ${ESTILOS[id].descricao}`);
+  document.querySelectorAll('.estilos button').forEach((b) => b.classList.toggle('ativo', b.dataset.estilo === id));
+  try { localStorage.setItem('estilo', id); } catch { /* sem storage: só não lembra */ }
+  const url = new URL(location.href);
+  url.searchParams.set('estilo', id);
+  history.replaceState(null, '', url);
+}
+
+for (const [id, e] of Object.entries(ESTILOS)) {
+  const b = document.createElement('button');
+  b.dataset.estilo = id;
+  b.textContent = e.nome;
+  b.addEventListener('click', () => escolherEstilo(id));
+  $('estilos').append(b);
+}
+let salvo = null;
+try { salvo = localStorage.getItem('estilo'); } catch { /* idem */ }
+escolherEstilo(new URLSearchParams(location.search).get('estilo') || salvo);
 $('btn-widget').addEventListener('click', abrirWidget);
 
 iniciarLoop(window);
