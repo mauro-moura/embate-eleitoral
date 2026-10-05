@@ -40,8 +40,8 @@ window.ESTILOS = window.ESTILOS || {};
 
       // HP: quem lidera tem a barra cheia; o outro, proporcional.
       const topo = Math.max(pL, pF);
-      caixaHP(api, 6, 6, esqOuDir(api, 'direita'), pF / topo, false);
-      caixaHP(api, 186, 84, esqOuDir(api, 'esquerda'), pL / topo, true);
+      caixaHP(api, 6, 6, esqOuDir(api, 'direita'), pF / topo);
+      caixaHP(api, 186, 84, esqOuDir(api, 'esquerda'), pL / topo);
 
       if (api.vivo) {
         const cx = mL.x + (mF.x - mL.x) * pL + Math.sin(t * 4) * 1.5;
@@ -66,9 +66,9 @@ window.ESTILOS = window.ESTILOS || {};
     g.fillStyle = '#a8d078'; g.beginPath(); g.ellipse(x, y - 1, rx - 4, ry - 3, 0, 0, Math.PI * 2); g.fill();
   }
 
-  function caixaHP(api, x, y, { cfg, pct }, hp, comNumero) {
+  function caixaHP(api, x, y, { cfg, pct }, hp) {
     const { ctx } = api;
-    const w = 128, h = comNumero ? 32 : 24;
+    const w = 128, h = 32;
     ctx.fillStyle = '#404848'; ctx.fillRect(x, y, w, h);
     ctx.fillStyle = '#f8f8e0'; ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
     ctx.fillStyle = cfg.cor; ctx.fillRect(x + 2, y + 2, 3, h - 4);
@@ -83,11 +83,9 @@ window.ESTILOS = window.ESTILOS || {};
     ctx.fillStyle = '#506058'; ctx.fillRect(bx, by, bw, 4);
     ctx.fillStyle = hp > 0.5 ? '#48c050' : hp > 0.2 ? '#f8c030' : '#e83828';
     ctx.fillRect(bx, by, Math.max(1, Math.round(bw * hp)), 4);
-    if (comNumero) {
-      ctx.font = FONTE; ctx.fillStyle = '#303030'; ctx.textAlign = 'right';
-      ctx.fillText(pct ? pct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '--', x + w - 6, y + 21);
-      ctx.textAlign = 'left';
-    }
+    ctx.font = FONTE; ctx.fillStyle = '#303030'; ctx.textAlign = 'right';
+    ctx.fillText(pct ? pct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '--', x + w - 6, y + 21);
+    ctx.textAlign = 'left';
   }
 
   function mensagens(api) {
