@@ -433,7 +433,57 @@ function iniciarLoop(win) {
 // Widget: arena numa janela flutuante sempre por cima (Document Picture-in-Picture,
 // Chrome/Edge 116+). Sem suporte, abre a página em modo ?widget num popup.
 // ---------------------------------------------------------------------------
+// Plano B (celular, Safari, http): a arena vira um vídeo ao vivo (canvas → stream) no
+// picture-in-picture de vídeo, a mesma janelinha flutuante de players de vídeo.
+const videoPiP = { tela: null, video: null, timer: 0 };
+
+function desenharTelaVideo() {
+  const tela = videoPiP.tela, g = tela.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.drawImage(canvas, 0, 0, tela.width, tela.height);
+  if (ESTILOS[cena.estilo].placarProprio || !estado.br) return;
+  // O placar em HTML não entra no vídeo: desenha por cima.
+  const { esquerda, direita } = estado.br;
+  g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, tela.width, 46);
+  g.font = '20px "Press Start 2P", monospace'; g.textBaseline = 'middle';
+  g.fillStyle = CFG.esquerda.cor; g.textAlign = 'left';
+  g.fillText(`${CFG.esquerda.nome.toUpperCase()} ${fmtPct(esquerda.pct)}`, 14, 24);
+  g.fillStyle = CFG.direita.cor; g.textAlign = 'right';
+  g.fillText(`${fmtPct(direita.pct)} ${CFG.direita.nome.toUpperCase()}`, tela.width - 14, 24);
+  if (api.faixa) {
+    g.font = '18px "Press Start 2P", monospace'; g.textAlign = 'center';
+    const larg = g.measureText(api.faixa).width + 28, x = (tela.width - larg) / 2, y = tela.height - 56;
+    g.fillStyle = 'rgba(0,0,0,.75)'; g.fillRect(x, y, larg, 40);
+    g.strokeStyle = '#ffd23f'; g.lineWidth = 3; g.strokeRect(x, y, larg, 40);
+    g.fillStyle = '#ffd23f'; g.fillText(api.faixa, tela.width / 2, y + 21);
+  }
+}
+
+async function abrirWidgetVideo() {
+  if (document.pictureInPictureElement) { await document.exitPictureInPicture(); return; }
+  if (!videoPiP.tela) {
+    videoPiP.tela = Object.assign(document.createElement('canvas'), { width: 960, height: 480 });
+    const v = videoPiP.video = document.createElement('video');
+    v.muted = true; v.playsInline = true;
+    v.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none';
+    document.body.append(v);
+    desenharTelaVideo();
+    v.srcObject = videoPiP.tela.captureStream(30);
+    v.addEventListener('leavepictureinpicture', () => { clearInterval(videoPiP.timer); videoPiP.timer = 0; });
+  }
+  await videoPiP.video.play();
+  await videoPiP.video.requestPictureInPicture();
+  // Com o app em segundo plano o requestAnimationFrame para; o timer mantém o vídeo vivo
+  // enquanto o navegador deixar (alguns congelam timers de abas escondidas).
+  clearInterval(videoPiP.timer);
+  videoPiP.timer = setInterval(() => { if (document.hidden) quadro(); desenharTelaVideo(); }, 1000 / 30);
+}
+
 async function abrirWidget() {
+  if (!('documentPictureInPicture' in window) && document.pictureInPictureEnabled
+      && 'captureStream' in HTMLCanvasElement.prototype) {
+    try { await abrirWidgetVideo(); return; } catch { /* cai no popup abaixo */ }
+  }
   if (!('documentPictureInPicture' in window)) {
     window.open(`?widget&estilo=${cena.estilo}`, 'embate-widget', 'popup,width=480,height=270');
     const dica = $('dica-widget');
@@ -543,4 +593,9 @@ $('btn-widget').addEventListener('click', abrirWidget);
 
 iniciarLoop(window);
 carregar();
+
+// PWA: instalável e abre offline (o service worker só funciona em https ou localhost).
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* sem PWA, o site segue normal */ });
+}
 setInterval(carregar, CFG.refreshMs);
