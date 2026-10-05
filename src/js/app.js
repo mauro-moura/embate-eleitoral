@@ -571,8 +571,9 @@ function escolherEstilo(id) {
   if (!ESTILOS[id]) id = 'kamehameha';
   cena.estilo = id;
   canvas.setAttribute('aria-label', `${CFG.esquerda.nome} e ${CFG.direita.nome} ${ESTILOS[id].descricao}`);
-  // Estilos com placar próprio na cena (ex.: pokemon) escondem a faixa e o mini-placar via CSS.
   canvas.parentElement.dataset.estilo = id;
+  // Estilos com placar próprio na cena escondem a faixa e o mini-placar em HTML (via CSS).
+  canvas.parentElement.dataset.placarProprio = ESTILOS[id].placarProprio ? 'sim' : 'nao';
   document.querySelectorAll('.estilos button').forEach((b) => b.classList.toggle('ativo', b.dataset.estilo === id));
   try { localStorage.setItem('estilo', id); } catch { /* sem storage: só não lembra */ }
   const url = new URL(location.href);
