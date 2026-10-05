@@ -14,6 +14,8 @@ window.ELEICAO = {
     numero: '13',
     nome: 'Lula',
     partido: 'PT',
+    // Nomes de golpe usados no estilo Pokémon (revezam na caixa de texto).
+    golpes: ['FAZ O L', 'PICANHA', 'O AMOR VENCEU'],
     cor: '#e8402e', clara: '#ffb199', escura: '#8f1a0f',
     // Sprite opcional (ver PROMPTS.md). Sem ele, o lutador é desenhado pelo código com o visual abaixo.
     sprite: 'src/img/sprites/lula.png',
@@ -29,6 +31,7 @@ window.ELEICAO = {
     numero: '22',
     nome: 'Flávio',
     partido: 'PL',
+    golpes: ['ZERO UM', 'VERDE E AMARELO', 'DEUS, PÁTRIA E FAMÍLIA'],
     cor: '#2f7bf0', clara: '#a9cbff', escura: '#123b8c',
     sprite: 'src/img/sprites/flavio.png',
     visual: {

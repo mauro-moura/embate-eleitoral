@@ -101,6 +101,9 @@ body.widget .estados, body.widget footer { display: none; }
 body.widget .arena { border: 0; box-shadow: none; height: 100vh; }
 body.widget .arena canvas { width: 100%; height: 100%; object-fit: contain; }
 body.widget .mini-placar { display: flex; }
+/* Estilos que já desenham nomes, HP e mensagens na própria cena */
+.arena[data-estilo="pokemon"] .faixa,
+body.widget .arena[data-estilo="pokemon"] .mini-placar { display: none; }
 body.widget .faixa { font-size: 9px; padding: 4px 8px; bottom: 6%; }
 
 /* Apuração */

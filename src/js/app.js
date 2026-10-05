@@ -160,6 +160,8 @@ function render() {
   if (eleito) { faixa.textContent = `${eleito.nome} VENCEU!`; faixa.hidden = false; }
   else if (vaiPro2) { faixa.textContent = 'VAI TER 2º ROUND!'; faixa.hidden = false; }
   else faixa.hidden = true;
+  api.faixa = faixa.hidden ? '' : faixa.textContent;
+  api.pctEsq = esquerda.pct; api.pctDir = direita.pct; api.apurado = b.apurado;
 
   const fatia = esquerda.votos + direita.votos > 0 ? esquerda.votos / (esquerda.votos + direita.votos) : 0.5;
   cena.alvo = Math.min(0.92, Math.max(0.08, 0.5 + (fatia - 0.5) * CFG.exagero));
@@ -265,9 +267,9 @@ function carregarSprite(src) {
 
 // --- Lutador procedural (virado para a direita quando dir = 1) ---
 // pose 'dois': os dois braços à frente; 'um': só o da frente, o outro recolhido.
-function desenharLutador(v, x, dir, braco, grossura, t, pose) {
+function desenharLutador(v, x, dir, braco, grossura, t, pose, chao = CHAO) {
   const bob = Math.round(Math.sin(t * 7 + (dir > 0 ? 0 : 1.5)) * 0.8);
-  const y = CHAO;
+  const y = chao;
   const r = (dx, dy, w, h, c) => {
     ctx.fillStyle = c;
     const px = dir > 0 ? x + dx : x - dx - w;
@@ -308,17 +310,17 @@ function desenharLutador(v, x, dir, braco, grossura, t, pose) {
   return { x: x + dir * (3 + braco + 5), y: y + by(-35 + grossura) };
 }
 
-function desenharSprite(s, x, dir, escala, t) {
+function desenharSprite(s, x, dir, escala, t, chao = CHAO) {
   const q = Math.floor(t * 8) % s.quadros;
   const lado = s.img.height;
   const tam = Math.round(64 * escala);
   ctx.save();
-  ctx.translate(x, CHAO);
+  ctx.translate(x, chao);
   ctx.scale(dir, 1);
   ctx.drawImage(s.img, q * lado, 0, lado, lado, -tam / 2, -tam, tam, tam);
   ctx.restore();
   // mãos assumidas na borda frontal, ~55% da altura
-  return { x: x + dir * (tam / 2 - 4), y: CHAO - tam * 0.55 };
+  return { x: x + dir * (tam / 2 - 4), y: chao - tam * 0.55 };
 }
 
 function bola(x, y, raio, cfg) {
@@ -327,7 +329,7 @@ function bola(x, y, raio, cfg) {
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, raio * 0.5, 0, Math.PI * 2); ctx.fill();
 }
 
-function aura(x, cfg, forca, t) {
+function aura(x, cfg, forca, t, chao = CHAO) {
   // Chama: colunas mais altas no centro, com labaredas tremendo.
   const h = 48 + 26 * forca, meia = Math.round(13 + 9 * forca);
   for (const [alfa, enc, cor] of [[0.22, 1, cfg.cor], [0.3, 0.6, cfg.clara]]) {
@@ -338,7 +340,7 @@ function aura(x, cfg, forca, t) {
       const forma = Math.sqrt(1 - (dx / (m + 1)) ** 2);
       const lab = Math.sin(dx * 0.9 + t * 18) * 4 + Math.sin(dx * 0.37 - t * 11) * 3;
       const lh = Math.max(0, Math.round((h * enc) * forma + lab));
-      ctx.fillRect(Math.round(x + dx), CHAO - lh, 2, lh);
+      ctx.fillRect(Math.round(x + dx), chao - lh, 2, lh);
     }
   }
   ctx.globalAlpha = 1;
@@ -365,21 +367,23 @@ const api = {
   ctx, W, H, CHAO,
   t: 0, pL: 0.5, pF: 0.5, vivo: false,
   esq: CFG.esquerda, dir: CFG.direita,
-  // Desenha o lutador ('esquerda' ou 'direita') com os pés em x; devolve onde fica a mão da frente.
-  lutador(lado, x, p) {
+  // Dados da apuração (para estilos que mostram números) e texto da faixa ('' se não houver).
+  pctEsq: 0, pctDir: 0, apurado: 0, faixa: '',
+  // Desenha o lutador ('esquerda' ou 'direita') com os pés em (x, chao); devolve onde fica a mão da frente.
+  lutador(lado, x, p, chao = CHAO) {
     const dir = lado === 'esquerda' ? 1 : -1;
     const m = medidas(p);
     const sprite = cena.sprites[lado];
     return sprite
-      ? desenharSprite(sprite, x, dir, m.escala, api.t)
-      : desenharLutador(CFG[lado].visual, x, dir, m.braco, m.grossura, api.t, ESTILOS[cena.estilo].pose);
+      ? desenharSprite(sprite, x, dir, m.escala, api.t, chao)
+      : desenharLutador(CFG[lado].visual, x, dir, m.braco, m.grossura, api.t, ESTILOS[cena.estilo].pose, chao);
   },
   // Distância horizontal entre os pés (x) e a mão da frente.
   alcance(lado, p) {
     const m = medidas(p);
     return cena.sprites[lado] ? Math.round(64 * m.escala) / 2 - 4 : m.braco + 8;
   },
-  aura: (x, cfg, forca) => aura(x, cfg, forca, api.t),
+  aura: (x, cfg, forca, chao = CHAO) => aura(x, cfg, forca, api.t, chao),
   bola: (x, y, raio, cores) => bola(x, y, raio, cores),
   faisca(x, y, cor, forca = 1) {
     const a = Math.random() * Math.PI * 2, vel = (0.6 + Math.random() * 1.8) * forca;
@@ -516,6 +520,8 @@ function escolherEstilo(id) {
   if (!ESTILOS[id]) id = 'kamehameha';
   cena.estilo = id;
   canvas.setAttribute('aria-label', `${CFG.esquerda.nome} e ${CFG.direita.nome} ${ESTILOS[id].descricao}`);
+  // Estilos com placar próprio na cena (ex.: pokemon) escondem a faixa e o mini-placar via CSS.
+  canvas.parentElement.dataset.estilo = id;
   document.querySelectorAll('.estilos button').forEach((b) => b.classList.toggle('ativo', b.dataset.estilo === id));
   try { localStorage.setItem('estilo', id); } catch { /* sem storage: só não lembra */ }
   const url = new URL(location.href);
