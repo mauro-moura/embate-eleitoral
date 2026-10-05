@@ -1,6 +1,7 @@
 // Estilo "Mortal Kombat": ponte de pedra sobre um poço de espinhos, céu vermelho e lua.
-// Barras de vida verdes com o nome dentro (quem lidera tem a barra cheia). Esquerda lança
-// uma lança na corrente ("VEM PRA CÁ!"), direita lança bolas de gelo; os golpes se chocam
+// Barras de vida verdes com o nome dentro (quem lidera tem a barra cheia). Quem tem chapéu
+// (visual.chapeu em eleicao.js) arremessa o chapéu girando, como o Kung Lao; sem chapéu, a
+// esquerda lança uma lança na corrente e a direita bolas de gelo. Os golpes se chocam
 // no ponto que quem tem mais voto empurra para o lado do outro. O nome de cada arremesso
 // vem de "golpes" em eleicao.js. Contrato dos estilos: ver estilos/kamehameha.js.
 window.ESTILOS = window.ESTILOS || {};
@@ -11,6 +12,7 @@ window.ESTILOS = window.ESTILOS || {};
   const FONTE = '8px "Press Start 2P", monospace';
   const LANCA = { ciclo: 1.6, vel: 150, segura: 0.15 };
   const GELO = { periodo: 0.8, bolas: 3, vel: 90, explosao: 0.35 };
+  const CHAPEU = { vel: 130, segura: 0.12, descanso: 0.45 };
 
   window.ESTILOS.mortalkombat = {
     nome: 'MORTAL KOMBAT',
@@ -53,19 +55,81 @@ window.ESTILOS = window.ESTILOS || {};
     },
 
     quadro(api) {
-      const { W, pL, pF, esq, dir } = api;
+      const { W, t, pL, pF, esq, dir } = api;
       animarFundo(api);
-      const mL = api.lutador('esquerda', X_ESQ, pL, PONTE);
-      const mF = api.lutador('direita', W - X_ESQ, pF, PONTE);
+      const xL = X_ESQ, xF = W - X_ESQ;
+      // Chapéu em voo é calculado antes, para desenhar o lutador sem ele na cabeça.
+      const choque0 = xL + api.alcance('esquerda', pL) + ((xF - api.alcance('direita', pF)) - (xL + api.alcance('esquerda', pL))) * pL;
+      const yGolpe = PONTE - 31;
+      const vooL = api.vivo && temChapeu(esq) ? voo(t, xL + 1, PONTE - 55, choque0, yGolpe) : null;
+      const vooF = api.vivo && temChapeu(dir) ? voo(t + 0.9, xF - 1, PONTE - 55, choque0, yGolpe) : null;
+      const mL = api.lutador('esquerda', xL, pL, PONTE, { semChapeu: !!vooL });
+      const mF = api.lutador('direita', xF, pF, PONTE, { semChapeu: !!vooF });
       if (api.vivo) {
         const y = Math.round((mL.y + mF.y) / 2);
         const choque = mL.x + (mF.x - mL.x) * pL;
-        lanca(api, mL.x, choque, y, pL, esq, X_ESQ);
-        gelo(api, mF.x, choque, y, pF, dir, W - X_ESQ);
+        if (temChapeu(esq)) chapeu(api, vooL, choque, y, pL, esq, xL, 62, 1);
+        else lanca(api, mL.x, choque, y, pL, esq, X_ESQ);
+        if (temChapeu(dir)) chapeu(api, vooF, choque, y, pF, dir, xF, 74, -1);
+        else gelo(api, mF.x, choque, y, pF, dir, W - X_ESQ);
       }
       hud(api, Math.max(pL, pF));
     },
   };
+
+  const temChapeu = (cfg) => !!(cfg.visual && cfg.visual.chapeu);
+
+  // Voo do chapéu no instante t (bumerangue): sai da cabeça em arco, bate no choque e volta.
+  // null quando está descansando na cabeça.
+  function voo(t, x0, y0, x1, y1) {
+    const ida = Math.hypot(x1 - x0, y1 - y0) / CHAPEU.vel, volta = ida * 0.7;
+    const ciclo = ida + CHAPEU.segura + volta + CHAPEU.descanso;
+    const fase = t % ciclo;
+    let s;
+    if (fase < ida) s = fase / ida;
+    else if (fase < ida + CHAPEU.segura) s = 1;
+    else if (fase < ida + CHAPEU.segura + volta) s = 1 - (fase - ida - CHAPEU.segura) / volta;
+    else return null;
+    return {
+      x: x0 + (x1 - x0) * s, y: y0 + (y1 - y0) * s - Math.sin(s * Math.PI) * 12,
+      fase, voltando: fase >= ida + CHAPEU.segura, batendo: fase >= ida && fase < ida + CHAPEU.segura,
+      n: Math.floor(t / ciclo),
+    };
+  }
+
+  // Fedora girando de lado, com a aba brilhando como lâmina (estilo Kung Lao).
+  function chapeu(api, v, choque, y, p, cfg, xPes, yNome, dir) {
+    if (!v) return;
+    const { ctx, t } = api;
+    const c = cfg.visual.chapeu;
+    const esc = 1 + 0.8 * p;
+    const giro = t * 22;
+    const rx = 9 * esc, ry = 2.2 * esc;
+    // rastro de movimento atrás do chapéu
+    const atras = v.voltando ? dir : -dir;
+    ctx.fillStyle = cfg.clara;
+    for (let k = 1; k <= 3; k++) ctx.fillRect(Math.round(v.x + atras * (rx + k * 4)), Math.round(v.y - 3 + k * 2), 3, 1);
+    // aba
+    ctx.fillStyle = c.sombra; ctx.beginPath(); ctx.ellipse(v.x, v.y + 1, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = c.cor; ctx.beginPath(); ctx.ellipse(v.x, v.y, rx, ry * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+    // copa: a largura pulsa com o giro, como vista de lado girando
+    const cw = Math.max(3, Math.round(10 * esc * (0.6 + 0.4 * Math.abs(Math.cos(giro)))));
+    const ch = Math.round(5 * esc);
+    const topo = Math.round(v.y - ry * 0.5 - ch);
+    ctx.fillStyle = c.cor; ctx.fillRect(Math.round(v.x - cw / 2), topo, cw, ch);
+    ctx.fillStyle = c.sombra; ctx.fillRect(Math.round(v.x - 1), topo, 2, 1);
+    ctx.fillStyle = c.faixa; ctx.fillRect(Math.round(v.x - cw / 2), topo + ch - Math.max(1, Math.round(1.5 * esc)), cw, Math.max(1, Math.round(1.5 * esc)));
+    // brilho da lâmina percorrendo a aba
+    ctx.fillStyle = '#ffffff';
+    for (const k of [0, Math.PI]) {
+      ctx.fillRect(Math.round(v.x + Math.cos(giro + k) * rx), Math.round(v.y + Math.sin(giro + k) * ry), 2, 1);
+    }
+    if (v.batendo) {
+      api.bola(choque, y, 3 + 4 * p, { escura: cfg.escura, cor: '#fff3c0' });
+      api.faisca(choque, y, cfg.clara, 1.5);
+    }
+    if (v.fase < 0.6) nomeDoGolpe(api, cfg, xPes, v.n, yNome);
+  }
 
   // Chamas das tochas e morcegos cruzando o céu.
   function animarFundo(api) {
@@ -175,8 +239,9 @@ window.ESTILOS = window.ESTILOS || {};
     if (api.faixa) {
       ctx.textBaseline = 'middle';
       const larg = ctx.measureText(api.faixa).width + 14;
-      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(W / 2 - larg / 2, 82, larg, 14);
-      contorno(ctx, api.faixa, W / 2, 89, '#ffd23f');
+      // logo abaixo do placar, fora do caminho dos golpes (o chapéu passa mais embaixo)
+      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(W / 2 - larg / 2, 34, larg, 14);
+      contorno(ctx, api.faixa, W / 2, 41, '#ffd23f');
     }
     ctx.textAlign = 'left';
   }
