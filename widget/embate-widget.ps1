@@ -1,4 +1,4 @@
-﻿# Abre o widget do Embate 2026 numa janela pequena, sem barras e sempre no topo (Windows).
+﻿# Abre o widget do Embate Eleitoral numa janela pequena, sem barras e sempre no topo (Windows).
 #
 # Uso: powershell -ExecutionPolicy Bypass -File widget\embate-widget.ps1 [-Url URL] [-Navegador chrome|edge|brave|firefox] [-Largura 480] [-Altura 270]
 #   ou dois cliques em widget\embate-widget.bat
@@ -12,7 +12,7 @@ param(
   [int]$Altura = 270
 )
 $ErrorActionPreference = 'Stop'
-$Titulo = 'Embate 2026 - Widget'   # document.title da página em modo ?widget
+$Titulo = 'Embate Eleitoral - Widget'   # document.title da página em modo ?widget
 
 function Info($m) { Write-Host "==> $m" -ForegroundColor Yellow }
 function Aviso($m) { Write-Host "AVISO: $m" -ForegroundColor Magenta }

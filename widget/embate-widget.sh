@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Abre o widget do Embate 2026 numa janela pequena, sem barras, sempre no topo e em
+# Abre o widget do Embate Eleitoral numa janela pequena, sem barras, sempre no topo e em
 # todos os ambientes de trabalho. Linux (X11, ou Wayland via XWayland) e macOS.
 #
 # Uso: widget/embate-widget.sh [opções]
 #   --url URL          endereço do site (padrão: $EMBATE_URL ou http://localhost:8000/)
 #   --navegador NOME   chrome | chromium | edge | brave | firefox (padrão: o primeiro instalado)
 #   --tamanho LxA      tamanho da janela (padrão: 480x270)
-#   --instalar         cria um atalho "Embate 2026 (widget)" no menu de aplicativos (Linux)
+#   --instalar         cria um atalho "Embate Eleitoral (widget)" no menu de aplicativos (Linux)
 set -euo pipefail
 
 URL="${EMBATE_URL:-http://localhost:8000/}"
@@ -14,7 +14,7 @@ NAV=""
 LARG=480
 ALT=270
 INSTALAR=0
-TITULO="Embate 2026 - Widget"   # document.title da página em modo ?widget
+TITULO="Embate Eleitoral - Widget"   # document.title da página em modo ?widget
 SO="$(uname -s)"
 
 info() { printf '\033[1;33m==>\033[0m %s\n' "$*"; }
@@ -56,7 +56,7 @@ if ((INSTALAR)); then
   cat > "$ATALHO" <<EOF
 [Desktop Entry]
 Type=Application
-Name=Embate 2026 (widget)
+Name=Embate Eleitoral (widget)
 Comment=Apuração da eleição como luta, sempre no topo
 Exec=$EXEC
 Icon=applications-games

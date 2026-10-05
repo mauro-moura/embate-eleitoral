@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Atualiza o Embate 2026 (git pull) e reinicia o site na mesma porta.
+# Atualiza o Embate Eleitoral (git pull) e reinicia o site na mesma porta.
 #
 # Uso: ./update.sh
 set -euo pipefail

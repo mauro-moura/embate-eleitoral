@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Instala o Embate 2026 e já deixa o site rodando.
+# Instala o Embate Eleitoral e já deixa o site rodando.
 # Pode rodar de novo sem medo: para a instância anterior e sobe outra.
 #
 # Uso: ./setup.sh [porta]        (padrão: 8000, ou a última porta usada)
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVICO=embate2026
+SERVICO=embate-eleitoral
 CONF="$DIR/.embate.conf"
 PIDFILE="$DIR/.embate.pid"
 LOG="$DIR/.embate.log"
@@ -42,6 +42,15 @@ PY
 }
 
 # --- Para o que estiver rodando -----------------------------------------------
+# Serviço com o nome antigo (antes de virar "Embate Eleitoral"): remove para liberar a porta.
+UNIT_ANTIGA="$HOME/.config/systemd/user/embate2026.service"
+if tem_systemd && [[ -f "$UNIT_ANTIGA" ]]; then
+  info "Removendo o serviço antigo embate2026"
+  systemctl --user disable --now embate2026 >/dev/null 2>&1 || true
+  rm -f "$UNIT_ANTIGA"
+  systemctl --user daemon-reload
+fi
+
 nossa_instancia() {
   if tem_systemd && [[ -f "$UNIT" ]]; then
     systemctl --user is-active --quiet "$SERVICO" && return 0
@@ -74,7 +83,7 @@ if tem_systemd; then
   mkdir -p "$(dirname "$UNIT")"
   cat > "$UNIT" <<EOF
 [Unit]
-Description=Embate 2026 - site da apuração
+Description=Embate Eleitoral - site da apuração
 After=network-online.target
 
 [Service]
@@ -104,7 +113,7 @@ fi
 for _ in $(seq 1 20); do
   if "$PYTHON" -c "import urllib.request,sys; urllib.request.urlopen('http://127.0.0.1:$PORTA/', timeout=1)" 2>/dev/null; then
     IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
-    info "Embate 2026 no ar: $MODO"
+    info "Embate Eleitoral no ar: $MODO"
     echo "    Neste computador:  http://localhost:$PORTA"
     [[ -n "$IP" ]] && echo "    Na rede local:     http://$IP:$PORTA"
     exit 0
