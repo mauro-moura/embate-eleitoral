@@ -7,8 +7,9 @@
 const CFG = {
   ...window.ELEICAO,
   refreshMs: 30000,
-  // Amplia a diferença na cena (47% x 45% quase não aparece). 1 = proporção real.
-  exagero: 4,
+  // Amplia a diferença na cena: com 8, 47% x 45% vira 42/58 entre os dois. Satura (92/8)
+  // a partir de ~10 pontos de diferença. 1 = proporção real.
+  exagero: 8,
 };
 const TITULO = 'Embate Eleitoral';
 

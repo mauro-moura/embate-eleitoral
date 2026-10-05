@@ -214,6 +214,6 @@ e o visual do boneco desenhado pelo código. Os códigos novos saem de
 
 ## Ajustes
 
-Em `src/js/app.js`, no objeto `CFG`: `exagero` amplia a diferença na cena (47% × 45% quase não
-aparece; `1` = proporção real). Placar, barras e tabela sempre mostram os números reais.
+Em `src/js/app.js`, no objeto `CFG`: `exagero` amplia a diferença na cena (padrão 8: 47% × 45%
+vira 42/58 entre os dois; `1` = proporção real). Placar, barras e tabela sempre mostram os números reais.
 Sprites opcionais: veja [PROMPTS.md](PROMPTS.md).
