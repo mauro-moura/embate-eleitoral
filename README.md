@@ -19,14 +19,48 @@ Abrir o `index.html` direto (file://) não funciona, porque o navegador bloqueia
 
 ## Widget
 
-O botão **WIDGET** tira a luta da página e coloca numa janelinha flutuante que fica por cima
-de todas as outras janelas (dá para redimensionar e arrastar para o canto). Fechando a janelinha,
-a luta volta para a página. Usa a API *Document Picture-in-Picture*: só Chrome, Chromium e Edge
-(versão 116 em diante), e só em `localhost` ou `https`.
+Há dois jeitos de deixar a luta num cantinho da tela.
 
-Em outros navegadores, o botão abre `?widget` num popup pequeno: a mesma luta, só que sem o
-"sempre por cima". Esse endereço também serve para fonte de navegador no OBS ou para uma
-janela de app: `chromium --app="http://localhost:8000/?widget" --window-size=480,270`.
+### Lançador (recomendado): sempre no topo e em todos os ambientes de trabalho
+
+Abre só a luta numa janela pequena sem barras, no canto inferior direito, e pede ao sistema
+para deixá-la por cima de tudo e visível em todos os ambientes de trabalho. Rodar de novo
+reaproveita a janela que já estiver aberta.
+
+| Sistema | Comando | Navegadores |
+|---|---|---|
+| Linux | `widget/embate-widget.sh --url http://IP-DO-PI:8000` | Chrome, Chromium, Edge, Brave, Firefox |
+| Windows | dois cliques em `widget\embate-widget.bat`, ou `widget\embate-widget.ps1 -Url http://IP-DO-PI:8000` | Chrome, Edge, Brave, Firefox |
+| macOS | `widget/embate-widget.sh --url http://IP-DO-PI:8000` | Chrome, Edge, Brave (ver abaixo) |
+
+Opções: navegador (`--navegador firefox` / `-Navegador firefox`; padrão: o primeiro instalado)
+e tamanho (`--tamanho 480x270` / `-Largura 480 -Altura 270`). Também dá para definir o endereço
+uma vez com a variável `EMBATE_URL`.
+
+- **Linux:** precisa do `wmctrl` (`sudo apt install wmctrl`). No Wayland, o navegador do widget
+  roda via XWayland para isso funcionar; GNOME e KDE aceitam, outros compositores podem ignorar.
+  Nesse caso: botão direito na barra de título, "Sempre no topo" e "Sempre na área de trabalho
+  visível". `--instalar` cria o atalho "Embate 2026 (widget)" no menu de aplicativos.
+- **Windows:** o "sempre no topo" funciona sem nada extra. Para aparecer em todas as áreas de
+  trabalho, instale uma vez `Install-Module VirtualDesktop -Scope CurrentUser`; sem ele, faça à
+  mão: Win+Tab, botão direito no widget, "Mostrar esta janela em todas as áreas de trabalho".
+- **macOS:** o sistema não deixa um script fixar a janela de outro app. O lançador abre o site
+  com o PiP liberado mesmo em `http` da rede local; clique em **WIDGET**. O Firefox não tem
+  janela flutuante para páginas, então no macOS ele não fica no topo.
+- **Firefox:** não tem modo "app"; o lançador cria um perfil próprio (em
+  `~/.local/share/embate-widget/firefox` ou `%LOCALAPPDATA%\embate-widget\firefox`) com abas e
+  barras escondidas.
+
+### Botão WIDGET na página
+
+Usa a API *Document Picture-in-Picture* para soltar a luta numa janela flutuante sempre por cima.
+Só existe no Chrome, Chromium, Edge e Brave (116+), e **só em `https` ou `localhost`**. Acessando
+pelo IP (`http://192.168.x.x:8000`) a API some e o botão abre um popup comum, que não fica por cima.
+Para usar o PiP pela rede: publique no GitHub Pages (é `https`) ou, no Chrome, adicione o
+endereço em `chrome://flags/#unsafely-treat-insecure-origin-as-secure`.
+
+O endereço `?widget` (ex.: `http://localhost:8000/?widget`) mostra só a luta e serve também
+como fonte de navegador no OBS.
 
 ## Publicar no GitHub Pages
 
