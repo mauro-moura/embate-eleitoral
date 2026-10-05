@@ -1,6 +1,6 @@
 ﻿# Abre o widget do Embate Eleitoral numa janela pequena, sem barras e sempre no topo (Windows).
 #
-# Uso: powershell -ExecutionPolicy Bypass -File widget\embate-widget.ps1 [-Url URL] [-Navegador chrome|edge|brave|firefox] [-Largura 480] [-Altura 270]
+# Uso: powershell -ExecutionPolicy Bypass -File widget\embate-widget.ps1 [-Url URL] [-Navegador chrome|edge|brave|firefox] [-Largura 480] [-Altura 270] [-Estilo kamehameha|naruto]
 #   ou dois cliques em widget\embate-widget.bat
 #
 # Para aparecer em todas as áreas de trabalho virtuais, instale uma vez o módulo VirtualDesktop:
@@ -9,7 +9,8 @@ param(
   [string]$Url = $(if ($env:EMBATE_URL) { $env:EMBATE_URL } else { 'http://localhost:8000/' }),
   [ValidateSet('', 'chrome', 'edge', 'brave', 'firefox')][string]$Navegador = '',
   [int]$Largura = 480,
-  [int]$Altura = 270
+  [int]$Altura = 270,
+  [string]$Estilo = ''
 )
 $ErrorActionPreference = 'Stop'
 $Titulo = 'Embate Eleitoral - Widget'   # document.title da página em modo ?widget
@@ -20,6 +21,7 @@ function Aviso($m) { Write-Host "AVISO: $m" -ForegroundColor Magenta }
 $base = ($Url -split '[?#]')[0]
 if ($base -notlike '*.html') { $base = $base.TrimEnd('/') + '/' }
 $widgetUrl = "${base}?widget"
+if ($Estilo) { $widgetUrl += "&estilo=$Estilo" }
 
 $pf86 = ${env:ProgramFiles(x86)}
 $candidatos = [ordered]@{

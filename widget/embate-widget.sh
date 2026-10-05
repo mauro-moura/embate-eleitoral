@@ -6,11 +6,13 @@
 #   --url URL          endereço do site (padrão: $EMBATE_URL ou http://localhost:8000/)
 #   --navegador NOME   chrome | chromium | edge | brave | firefox (padrão: o primeiro instalado)
 #   --tamanho LxA      tamanho da janela (padrão: 480x270)
+#   --estilo NOME      estilo do embate: kamehameha | naruto (padrão: o último usado no widget)
 #   --instalar         cria um atalho "Embate Eleitoral (widget)" no menu de aplicativos (Linux)
 set -euo pipefail
 
 URL="${EMBATE_URL:-http://localhost:8000/}"
 NAV=""
+ESTILO=""
 LARG=480
 ALT=270
 INSTALAR=0
@@ -25,11 +27,12 @@ while (($#)); do
   case "$1" in
     --url) URL="${2:?falta o endereço}"; shift 2 ;;
     --navegador) NAV="${2:?falta o nome do navegador}"; shift 2 ;;
+    --estilo) ESTILO="${2:?falta o estilo}"; shift 2 ;;
     --tamanho)
       [[ "${2:-}" =~ ^([0-9]+)x([0-9]+)$ ]] || erro "tamanho inválido: ${2:-} (use LxA, ex.: 480x270)"
       LARG="${BASH_REMATCH[1]}"; ALT="${BASH_REMATCH[2]}"; shift 2 ;;
     --instalar) INSTALAR=1; shift ;;
-    -h|--help) sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) erro "opção desconhecida: $1 (veja --help)" ;;
   esac
 done
@@ -43,7 +46,7 @@ fi
 # http://x:8000 -> http://x:8000/?widget ; .../index.html -> .../index.html?widget
 BASE="${URL%%[?#]*}"
 [[ "$BASE" == *.html ]] || BASE="${BASE%/}/"
-WIDGET_URL="$BASE?widget"
+WIDGET_URL="$BASE?widget${ESTILO:+&estilo=$ESTILO}"
 ORIGEM="$(sed -E 's#^([a-z]+://[^/]+).*#\1#' <<<"$BASE")"
 
 # --- Atalho no menu ----------------------------------------------------------
@@ -53,6 +56,7 @@ if ((INSTALAR)); then
   mkdir -p "$(dirname "$ATALHO")"
   EXEC="\"$(cd "$(dirname "$0")" && pwd)/$(basename "$0")\" --url \"$URL\" --tamanho ${LARG}x$ALT"
   [[ -n "$NAV" ]] && EXEC+=" --navegador $NAV"
+  [[ -n "$ESTILO" ]] && EXEC+=" --estilo $ESTILO"
   cat > "$ATALHO" <<EOF
 [Desktop Entry]
 Type=Application
