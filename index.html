@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Embate 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+  <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="topo">
+      <h1>EMBATE <span>2026</span></h1>
+      <div class="turnos" role="group" aria-label="Turno">
+        <button data-turno="auto" class="ativo">AUTO</button>
+        <button data-turno="1">1º TURNO</button>
+        <button data-turno="2">2º TURNO</button>
+      </div>
+    </header>
+
+    <section class="hud" aria-live="polite">
+      <div class="lutador esq">
+        <div class="nome"><b id="nome-lula">LULA</b> <small>PT · 13</small></div>
+        <div class="barra"><i id="barra-lula"></i></div>
+        <div class="pct" id="pct-lula">--,--%</div>
+        <div class="votos" id="votos-lula">— votos</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="lutador dir">
+        <div class="nome"><small>PL · 22</small> <b id="nome-flavio">FLÁVIO</b></div>
+        <div class="barra"><i id="barra-flavio"></i></div>
+        <div class="pct" id="pct-flavio">--,--%</div>
+        <div class="votos" id="votos-flavio">— votos</div>
+      </div>
+    </section>
+
+    <div class="arena">
+      <canvas id="arena" width="320" height="160" aria-label="Lula e Flávio Bolsonaro disparando rajadas de energia um contra o outro"></canvas>
+      <div class="faixa" id="faixa" hidden></div>
+    </div>
+
+    <section class="apuracao">
+      <div class="linha">
+        <span>URNAS APURADAS</span>
+        <strong id="apurado">--%</strong>
+      </div>
+      <div class="progresso"><i id="barra-apurado"></i></div>
+      <div class="meta" id="meta">Carregando dados do TSE…</div>
+      <div class="extras" id="extras"></div>
+    </section>
+
+    <section class="estados">
+      <h2>PLACAR POR ESTADO</h2>
+      <p class="contagem" id="contagem"></p>
+      <div class="mapa" id="mapa"></div>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>UF</th><th>Estado</th><th>Apurado</th>
+              <th class="c-lula">Lula</th><th class="c-flavio">Flávio</th><th>Na frente</th>
+            </tr>
+          </thead>
+          <tbody id="tabela"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      Dados: <a href="https://resultados.tse.jus.br" target="_blank" rel="noopener">resultados.tse.jus.br</a>
+      · atualiza a cada 30s · site de brincadeira, sem vínculo com o TSE
+    </footer>
+  </main>
+  <script src="src/js/app.js"></script>
+</body>
+</html>
