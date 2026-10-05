@@ -19,6 +19,50 @@ Rodar o script de novo reinicia o site.
 
 Abrir o `index.html` direto (file://) não funciona, porque o navegador bloqueia as chamadas ao TSE.
 
+O servidor (`server.py`, só biblioteca padrão do Python) não entrega arquivos ou pastas que
+começam com ponto, como `.git` e `.tools`.
+
+## HTTPS na rede local
+
+Com HTTPS, o botão WIDGET abre a janela flutuante também acessando o Pi pelo IP. O Pi vira uma
+pequena autoridade certificadora (CA) só sua, e cada computador cliente passa a confiar nela.
+
+**1. No Raspberry**, uma vez:
+
+```sh
+ssl/gerar-certificado.sh
+```
+
+Cria a CA (só na primeira vez) e o certificado do site, e reinicia o site em
+`https://IP-DO-PI:8000`. No final, mostra a **impressão digital** da CA: anote. Os arquivos
+ficam em `~/.local/share/embate-eleitoral/ssl`, fora do projeto e do git.
+
+O certificado vale para `localhost`, `<hostname>.local` e os IPs de rede local do Pi. Se o IP
+mudar, rode de novo: a CA é reaproveitada e os clientes não precisam reinstalar nada. Nomes ou
+IPs extras: `ssl/gerar-certificado.sh outro-nome.local 192.168.0.50`.
+
+Por segurança, a CA só consegue assinar nomes `.local`, `localhost` e IPs de rede local: mesmo
+que a chave vazasse, não daria para falsificar sites da internet com ela.
+
+**2. Em cada computador cliente**, instale a CA e confira se a impressão digital bate:
+
+- **Linux / macOS:** `ssl/instalar-ca.sh https://IP-DO-PI:8000`.
+  No Linux, instala no sistema (pede `sudo`), no Chrome/Chromium/Edge/Brave e em todos os
+  perfis do Firefox; precisa do `certutil` (`sudo apt install libnss3-tools`). No macOS,
+  instala no chaveiro, que todos os navegadores usam.
+- **Windows** (PowerShell):
+  ```powershell
+  curl.exe -k -o ca.crt https://IP-DO-PI:8000/ca.crt
+  certutil -dump ca.crt | findstr /i "sha256"
+  certutil -user -addstore Root ca.crt
+  ```
+  Chrome, Edge e Brave usam o repositório do Windows. No Firefox, se ainda reclamar, ative
+  `security.enterprise_roots.enabled` em `about:config`.
+
+Depois, feche e abra os navegadores e acesse `https://IP-DO-PI:8000`.
+
+Para voltar ao HTTP: apague `~/.local/share/embate-eleitoral/ssl/servidor.*` e rode `./setup.sh`.
+
 ## Widget
 
 Há dois jeitos de deixar a luta num cantinho da tela.
