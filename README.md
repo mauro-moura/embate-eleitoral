@@ -1,8 +1,10 @@
-# Embate 2026
+# Embate Eleitoral
 
-Site local, de brincadeira, que mostra a apuração da eleição presidencial de 2026 como um
-"embate de Kamehameha" entre Lula e Flávio Bolsonaro. O braço e a rajada de cada um crescem
-conforme a votação.
+Projeto de brincadeira para acompanhar a apuração das eleições presidenciais de forma
+descontraída: os candidatos num "embate de Kamehameha" em pixel art, com dados ao vivo do TSE.
+O braço e a rajada de cada um crescem conforme a votação. Sem vínculo com o TSE nem com partidos.
+
+Configurado agora para 2026: Lula × Flávio Bolsonaro.
 
 ## Rodar
 
@@ -11,7 +13,7 @@ conforme a votação.
 ./setup.sh 8080     # outra porta (fica salva para as próximas vezes)
 ```
 
-Precisa só de Python 3.7+. Com systemd, o site vira um serviço de usuário (`embate2026`) que
+Precisa só de Python 3.7+. Com systemd, o site vira um serviço de usuário (`embate-eleitoral`) que
 sobe sozinho no boot. Sem systemd, roda em segundo plano até reiniciar a máquina.
 Rodar o script de novo reinicia o site.
 
@@ -40,7 +42,7 @@ uma vez com a variável `EMBATE_URL`.
 - **Linux:** precisa do `wmctrl` (`sudo apt install wmctrl`). No Wayland, o navegador do widget
   roda via XWayland para isso funcionar; GNOME e KDE aceitam, outros compositores podem ignorar.
   Nesse caso: botão direito na barra de título, "Sempre no topo" e "Sempre na área de trabalho
-  visível". `--instalar` cria o atalho "Embate 2026 (widget)" no menu de aplicativos.
+  visível". `--instalar` cria o atalho "Embate Eleitoral (widget)" no menu de aplicativos.
 - **Windows:** o "sempre no topo" funciona sem nada extra. Para aparecer em todas as áreas de
   trabalho, instale uma vez `Install-Module VirtualDesktop -Scope CurrentUser`; sem ele, faça à
   mão: Win+Tab, botão direito no widget, "Mostrar esta janela em todas as áreas de trabalho".
@@ -64,15 +66,27 @@ como fonte de navegador no OBS.
 
 ## Publicar no GitHub Pages
 
-O site é 100% estático e o TSE libera CORS para `github.io`, então funciona direto:
+O site é 100% estático e o TSE libera CORS para `github.io`, então funciona sem mudar nada.
 
-1. Crie um repositório no GitHub e envie a `main`:
-   `git remote add origin git@github.com:<usuario>/<repo>.git && git push -u origin main`
-2. No repositório: **Settings → Pages → Build and deployment → Deploy from a branch**,
-   branch `main`, pasta `/ (root)`.
-3. Em um ou dois minutos o site fica em `https://<usuario>.github.io/<repo>/`.
+1. No GitHub, crie o repositório `embate-eleitoral` **vazio** (sem README, licença nem
+   .gitignore, para não conflitar com o histórico daqui). Para o Pages gratuito, ele precisa
+   ser **público**.
+2. Aqui no projeto, aponte o remote e envie a `main`:
+   ```sh
+   git remote add origin https://github.com/<usuario>/embate-eleitoral.git
+   git push -u origin main
+   ```
+   (Com chave SSH configurada: `git@github.com:<usuario>/embate-eleitoral.git`.)
+3. No repositório: **Settings → Pages → Build and deployment**. Em *Source*, escolha
+   **Deploy from a branch**; em *Branch*, `main` e pasta `/ (root)`; **Save**.
+4. Aguarde o deploy em **Actions** (1 ou 2 minutos). O site fica em
+   `https://<usuario>.github.io/embate-eleitoral/`.
+5. Opcional: na página inicial do repositório, na engrenagem de **About**, cole a descrição,
+   marque *Use your GitHub Pages website* e adicione os topics.
 
-Todo `git push` na `main` publica a versão nova. O widget PiP também funciona lá (é `https`).
+Depois disso, todo `git push` na `main` publica a versão nova. No Pages o botão WIDGET abre a
+janela flutuante direto (é `https`), e os lançadores aceitam o endereço:
+`widget/embate-widget.sh --url https://<usuario>.github.io/embate-eleitoral/`.
 
 ## Atualizar
 
@@ -101,23 +115,26 @@ cd .tools && npm ci && PLAYWRIGHT_BROWSERS_PATH="$PWD/browsers" npx playwright i
 ## Parar / remover
 
 ```sh
-systemctl --user disable --now embate2026          # com systemd
-rm ~/.config/systemd/user/embate2026.service
+systemctl --user disable --now embate-eleitoral    # com systemd
+rm ~/.config/systemd/user/embate-eleitoral.service
 kill "$(cat .embate.pid)"                          # sem systemd
 ```
 
 ## Dados
 
 Os dados vêm direto dos arquivos públicos do TSE (`resultados.tse.jus.br`), que liberam CORS.
-A página atualiza sozinha a cada 30s.
+A página atualiza sozinha a cada 30s. **AUTO** usa o 2º turno se o arquivo já existir no TSE;
+senão, o 1º.
 
-- **AUTO**: usa o 2º turno se o arquivo já existir no TSE; senão, o 1º.
-- Códigos: 1º turno `6257`, 2º turno `6258` (em `CFG.turnos`, `src/js/app.js`).
+## Trocar de eleição
+
+Tudo o que é da eleição fica em `src/js/eleicao.js`: ano, endereço e códigos do TSE e os dois
+lutadores (`esquerda` e `direita`), cada um com número, nome de exibição, partido, cores, sprite
+e o visual do boneco desenhado pelo código. Os códigos novos saem de
+`https://resultados.tse.jus.br/oficial/comum/config/ele-c.json` (instruções no próprio arquivo).
 
 ## Ajustes
 
-Em `src/js/app.js`, no objeto `CFG`:
-
-- `exagero`: amplia a diferença na cena (47% × 45% quase não aparece). `1` = proporção real.
-  Placar, barras e tabela sempre mostram os números reais.
-- `lula.sprite` / `flavio.sprite`: sprites opcionais. Veja [PROMPTS.md](PROMPTS.md).
+Em `src/js/app.js`, no objeto `CFG`: `exagero` amplia a diferença na cena (47% × 45% quase não
+aparece; `1` = proporção real). Placar, barras e tabela sempre mostram os números reais.
+Sprites opcionais: veja [PROMPTS.md](PROMPTS.md).
