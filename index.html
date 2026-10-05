@@ -12,10 +12,13 @@
   <main class="wrap">
     <header class="topo">
       <h1>EMBATE <span>2026</span></h1>
-      <div class="turnos" role="group" aria-label="Turno">
-        <button data-turno="auto" class="ativo">AUTO</button>
-        <button data-turno="1">1º TURNO</button>
-        <button data-turno="2">2º TURNO</button>
+      <div class="controles">
+        <div class="turnos" role="group" aria-label="Turno">
+          <button data-turno="auto" class="ativo">AUTO</button>
+          <button data-turno="1">1º TURNO</button>
+          <button data-turno="2">2º TURNO</button>
+        </div>
+        <button id="btn-widget" class="btn-widget" title="Abre a luta numa janelinha que fica por cima das outras">WIDGET</button>
       </div>
     </header>
 
@@ -38,6 +41,11 @@
     <div class="arena">
       <canvas id="arena" width="320" height="160" aria-label="Lula e Flávio Bolsonaro disparando rajadas de energia um contra o outro"></canvas>
       <div class="faixa" id="faixa" hidden></div>
+      <div class="mini-placar">
+        <span class="l">LULA <b id="mini-lula">--%</b></span>
+        <span class="ap" id="mini-apurado"></span>
+        <span class="f"><b id="mini-flavio">--%</b> FLÁVIO</span>
+      </div>
     </div>
 
     <section class="apuracao">

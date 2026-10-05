@@ -125,7 +125,10 @@ async function carregar() {
 // ---------------------------------------------------------------------------
 // Render HTML
 // ---------------------------------------------------------------------------
-const $ = (id) => document.getElementById(id);
+// Referências guardadas no início: elementos levados para a janela do widget
+// deixam de ser encontrados por document.getElementById da página principal.
+const ELS = Object.fromEntries([...document.querySelectorAll('[id]')].map((el) => [el.id, el]));
+const $ = (id) => ELS[id];
 
 function render() {
   const b = estado.br;
@@ -148,6 +151,10 @@ function render() {
   extras.push(`<span>Brancos: <b>${fmtPct(b.brancos)}</b></span>`, `<span>Nulos: <b>${fmtPct(b.nulos)}</b></span>`,
     `<span>Abstenção: <b>${fmtPct(b.abstencao)}</b></span>`);
   $('extras').innerHTML = extras.join('');
+
+  $('mini-lula').textContent = fmtPct(lula.pct);
+  $('mini-flavio').textContent = fmtPct(flavio.pct);
+  $('mini-apurado').textContent = `${fmtPct(b.apurado)} apurado`;
 
   // Faixa de vencedor / situação
   const faixa = $('faixa');
@@ -399,9 +406,9 @@ function aura(x, cfg, forca, t) {
   ctx.globalAlpha = 1;
 }
 
-let t0 = performance.now();
-function quadro(agora) {
-  const t = (agora - t0) / 1000;
+const t0 = performance.now();
+function quadro() {
+  const t = (performance.now() - t0) / 1000;
   cena.p += (cena.alvo - cena.p) * 0.03;
   const pL = cena.p, pF = 1 - cena.p;
 
@@ -449,8 +456,62 @@ function quadro(agora) {
     s.x += s.vx; s.y += s.vy; s.vy += 0.04;
     ctx.fillStyle = s.cor; ctx.fillRect(Math.round(s.x), Math.round(s.y), 1, 1);
   }
+}
 
-  requestAnimationFrame(quadro);
+// O loop roda na janela onde a arena está: com a aba em segundo plano, o
+// requestAnimationFrame da página principal para, mas o do widget continua.
+let loopId = 0;
+function iniciarLoop(win) {
+  const id = ++loopId;
+  const passo = () => {
+    if (id !== loopId) return;
+    quadro();
+    win.requestAnimationFrame(passo);
+  };
+  win.requestAnimationFrame(passo);
+}
+
+// ---------------------------------------------------------------------------
+// Widget: arena numa janela flutuante sempre por cima (Document Picture-in-Picture,
+// Chrome/Edge 116+). Sem suporte, abre a página em modo ?widget num popup.
+// ---------------------------------------------------------------------------
+async function abrirWidget() {
+  if (!('documentPictureInPicture' in window)) {
+    window.open('?widget', 'embate-widget', 'popup,width=480,height=270');
+    return;
+  }
+  if (documentPictureInPicture.window) { documentPictureInPicture.window.focus(); return; }
+
+  const arena = document.querySelector('.arena');
+  const pip = await documentPictureInPicture.requestWindow({ width: 480, height: 240 });
+
+  for (const folha of document.styleSheets) {
+    try {
+      const style = pip.document.createElement('style');
+      style.textContent = [...folha.cssRules].map((r) => r.cssText).join('\n');
+      pip.document.head.append(style);
+    } catch {
+      // Folha de outra origem (Google Fonts): não dá para ler as regras, então linka.
+      const link = pip.document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = folha.href;
+      pip.document.head.append(link);
+    }
+  }
+  pip.document.title = 'Embate 2026';
+  pip.document.body.classList.add('widget');
+
+  const lugar = document.createElement('div');
+  lugar.className = 'arena-destacada';
+  lugar.textContent = 'A arena está no widget. Feche a janelinha para trazer de volta.';
+  arena.replaceWith(lugar);
+  pip.document.body.append(arena);
+  iniciarLoop(pip);
+
+  pip.addEventListener('pagehide', () => {
+    lugar.replaceWith(arena);
+    iniciarLoop(window);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -469,6 +530,9 @@ Promise.all([carregarSprite(CFG.lula.sprite), carregarSprite(CFG.flavio.sprite)]
   cena.sprites.flavio = f;
 });
 
-requestAnimationFrame(quadro);
+if (new URLSearchParams(location.search).has('widget')) document.body.classList.add('widget');
+$('btn-widget').addEventListener('click', abrirWidget);
+
+iniciarLoop(window);
 carregar();
 setInterval(carregar, CFG.refreshMs);
