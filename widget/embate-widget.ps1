@@ -1,6 +1,6 @@
 ﻿# Abre o widget do Embate Eleitoral numa janela pequena, sem barras e sempre no topo (Windows).
 #
-# Uso: powershell -ExecutionPolicy Bypass -File widget\embate-widget.ps1 [-Url URL] [-Navegador chrome|edge|brave|firefox] [-Largura 480] [-Altura 270] [-Estilo kamehameha|naruto|pokemon|streetfighter|mortalkombat]
+# Uso: powershell -ExecutionPolicy Bypass -File widget\embate-widget.ps1 [-Url URL] [-Navegador chrome|edge|brave|firefox] [-Largura 480] [-Altura 270] [-Estilo kamehameha|naruto|pokemon|streetfighter|mortalkombat|mariokart]
 #   ou dois cliques em widget\embate-widget.bat
 #
 # Para aparecer em todas as áreas de trabalho virtuais, instale uma vez o módulo VirtualDesktop:

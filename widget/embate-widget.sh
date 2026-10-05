@@ -6,7 +6,7 @@
 #   --url URL          endereço do site (padrão: $EMBATE_URL ou http://localhost:8000/)
 #   --navegador NOME   chrome | chromium | edge | brave | firefox (padrão: o primeiro instalado)
 #   --tamanho LxA      tamanho da janela (padrão: 480x270)
-#   --estilo NOME      kamehameha | naruto | pokemon | streetfighter | mortalkombat
+#   --estilo NOME      kamehameha | naruto | pokemon | streetfighter | mortalkombat | mariokart
 #                      (padrão: o último usado no widget)
 #   --instalar         cria um atalho "Embate Eleitoral (widget)" no menu de aplicativos (Linux)
 set -euo pipefail
