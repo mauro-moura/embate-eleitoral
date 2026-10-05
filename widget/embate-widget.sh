@@ -6,7 +6,8 @@
 #   --url URL          endereço do site (padrão: $EMBATE_URL ou http://localhost:8000/)
 #   --navegador NOME   chrome | chromium | edge | brave | firefox (padrão: o primeiro instalado)
 #   --tamanho LxA      tamanho da janela (padrão: 480x270)
-#   --estilo NOME      estilo do embate: kamehameha | naruto (padrão: o último usado no widget)
+#   --estilo NOME      kamehameha | naruto | pokemon | streetfighter | mortalkombat
+#                      (padrão: o último usado no widget)
 #   --instalar         cria um atalho "Embate Eleitoral (widget)" no menu de aplicativos (Linux)
 set -euo pipefail
 
@@ -32,7 +33,7 @@ while (($#)); do
       [[ "${2:-}" =~ ^([0-9]+)x([0-9]+)$ ]] || erro "tamanho inválido: ${2:-} (use LxA, ex.: 480x270)"
       LARG="${BASH_REMATCH[1]}"; ALT="${BASH_REMATCH[2]}"; shift 2 ;;
     --instalar) INSTALAR=1; shift ;;
-    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) erro "opção desconhecida: $1 (veja --help)" ;;
   esac
 done
