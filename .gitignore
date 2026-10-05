@@ -2,3 +2,5 @@
 .embate.conf
 .embate.pid
 .embate.log
+.tools/browsers/
+.tools/node_modules/
