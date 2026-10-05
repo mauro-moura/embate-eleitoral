@@ -24,6 +24,8 @@ window.ELEICAO = {
       terno: '#26335f', ternoEsc: '#18213f', camisa: '#f3f3f3', gravata: '#d4202a', calca: '#1f2a50',
       pele: '#e0a77f', peleEsc: '#b97d58', cabelo: '#cfd0d4', sobrancelha: '#8d8d8d',
       barba: '#e8e8ea', oculos: true, broche: '#d4202a',
+      // Opcional: fedora. No Mortal Kombat, quem tem chapéu arremessa ele (estilo Kung Lao).
+      chapeu: { cor: '#f4f1e6', sombra: '#c9c2ad', faixa: '#26262a' },
     },
   },
 

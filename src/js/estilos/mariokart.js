@@ -149,6 +149,13 @@ window.ESTILOS = window.ESTILOS || {};
     r(8, -19, 1, 7, '#222');                                       // volante
     r(-10, -30, 9, 10, v.pele);
     r(-11, -32, 10, 4, v.cabelo); r(-11, -29, 2, 4, v.cabelo);
+    if (v.chapeu) {
+      const c = v.chapeu;
+      r(-10, -37, 9, 5, c.cor); r(-10, -37, 2, 5, c.sombra);
+      r(-9, -38, 7, 1, c.cor); r(-6, -38, 2, 1, c.sombra);
+      r(-10, -33, 9, 1, c.faixa);
+      r(-13, -32, 15, 2, c.sombra); r(-13, -32, 15, 1, c.cor);
+    }
     if (v.barba) { r(-6, -24, 6, 4, v.barba); } else { r(-3, -23, 2, 1, '#8a4636'); }
     r(-3, -27, 2, 1, '#111');
     if (v.oculos) { r(-5, -28, 5, 1, '#222'); }

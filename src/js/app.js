@@ -269,7 +269,8 @@ function carregarSprite(src) {
 
 // --- Lutador procedural (virado para a direita quando dir = 1) ---
 // pose 'dois': os dois braços à frente; 'um': só o da frente, o outro recolhido.
-function desenharLutador(v, x, dir, braco, grossura, t, pose, chao = CHAO) {
+// semChapeu: desenha sem o chapéu (ex.: quando o estilo o arremessa).
+function desenharLutador(v, x, dir, braco, grossura, t, pose, chao = CHAO, semChapeu = false) {
   const bob = Math.round(Math.sin(t * 7 + (dir > 0 ? 0 : 1.5)) * 0.8);
   const y = chao;
   const r = (dx, dy, w, h, c) => {
@@ -294,6 +295,14 @@ function desenharLutador(v, x, dir, braco, grossura, t, pose, chao = CHAO) {
   r(-4, by(-48), 2, 3, v.peleEsc); // orelha
   r(-6, by(-54), 12, 4, v.cabelo);
   r(-6, by(-51), 3, 5, v.cabelo);
+  if (v.chapeu && !semChapeu) {
+    // fedora: aba curta (mais longa na frente), copa com faixa e o amassado no topo
+    const c = v.chapeu;
+    r(-5, by(-59), 11, 6, c.cor); r(-5, by(-59), 2, 6, c.sombra);
+    r(-4, by(-60), 9, 1, c.cor); r(0, by(-60), 2, 1, c.sombra);
+    r(-5, by(-55), 11, 2, c.faixa);
+    r(-8, by(-53), 18, 2, c.sombra); r(-8, by(-53), 18, 1, c.cor);
+  }
   if (v.barba) { r(-1, by(-45), 8, 5, v.barba); r(3, by(-44), 3, 1, '#9c5a48'); }
   else { r(4, by(-44), 2, 1, '#8a4636'); }
   r(4, by(-49), 3, 1, v.sobrancelha);
@@ -372,13 +381,15 @@ const api = {
   // Dados da apuração (para estilos que mostram números) e texto da faixa ('' se não houver).
   pctEsq: 0, pctDir: 0, apurado: 0, faixa: '',
   // Desenha o lutador ('esquerda' ou 'direita') com os pés em (x, chao); devolve onde fica a mão da frente.
-  lutador(lado, x, p, chao = CHAO) {
+  // opcoes.semChapeu: desenha sem o chapéu (o estilo está usando o chapéu como golpe).
+  lutador(lado, x, p, chao = CHAO, opcoes = {}) {
     const dir = lado === 'esquerda' ? 1 : -1;
     const m = medidas(p);
     const sprite = cena.sprites[lado];
     return sprite
       ? desenharSprite(sprite, x, dir, m.escala, api.t, chao)
-      : desenharLutador(CFG[lado].visual, x, dir, m.braco, m.grossura, api.t, ESTILOS[cena.estilo].pose, chao);
+      : desenharLutador(CFG[lado].visual, x, dir, m.braco, m.grossura, api.t, ESTILOS[cena.estilo].pose, chao,
+        opcoes.semChapeu);
   },
   // Distância horizontal entre os pés (x) e a mão da frente.
   alcance(lado, p) {
