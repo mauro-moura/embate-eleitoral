@@ -16,7 +16,8 @@ const pronto = (p) => p.waitForFunction(() => document.getElementById('mini-esqu
 const telas = [['desktop', 1280, 900, '?estilo=kamehameha'], ['celular', 400, 860, '?estilo=kamehameha'],
   ['widget', 480, 240, '?widget&estilo=kamehameha'], ['widget-naruto', 480, 240, '?widget&estilo=naruto'],
   ['widget-pokemon', 480, 240, '?widget&estilo=pokemon'],
-  ['widget-streetfighter', 480, 240, '?widget&estilo=streetfighter']];
+  ['widget-streetfighter', 480, 240, '?widget&estilo=streetfighter'],
+  ['widget-mortalkombat', 480, 240, '?widget&estilo=mortalkombat']];
 for (const [nome, w, h, sufixo] of telas) {
   // ignoreHTTPSErrors: o certificado é da CA local, que o Chromium daqui não conhece.
   const p = await b.newPage({ viewport: { width: w, height: h }, ignoreHTTPSErrors: true });
