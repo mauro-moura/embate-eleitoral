@@ -84,6 +84,19 @@ Para criar outro estilo, copie `src/js/estilos/kamehameha.js`, troque a chave em
 offline). O botão aparece sozinho. O que `quadro()` recebe
 (lutadores, aura, faíscas, linhas etc.) está descrito no objeto `api` de `src/js/app.js`.
 
+## Tela de vitória
+
+Quando o TSE marca um dos dois como **Eleito**, a luta para e cada estilo mostra o seu final:
+a rajada do vencedor engolindo a do outro (Kamehameha), o vencedor de pé no rio (Naruto), o HP
+zerado (Pokémon), a barra de vida vazia (Street Fighter e Mortal Kombat) ou o pódio com troféu
+(Mario Kart). Em todos, confete nas cores do vencedor e a porcentagem final; o tremor desliga.
+Vale também para o widget e para o vídeo do celular. Antes disso, nada de vitória: maioria
+parcial não conta.
+
+Para ver antes da hora: `?simular=esquerda` ou `?simular=direita` na URL. A cena mostra a
+etiqueta **SIMULAÇÃO** e o texto da apuração também avisa, para um print ou link compartilhado
+não ser confundido com resultado real.
+
 ## App no celular (PWA)
 
 Em `https` (GitHub Pages, ou o Pi com a CA instalada no celular), o site pode ser instalado
