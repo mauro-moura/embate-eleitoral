@@ -56,7 +56,45 @@ window.ESTILOS = window.ESTILOS || {};
       for (const n of nomes) nomeDoGolpe(api, ...n);                    // por cima dos karts
       hud(api);
     },
+
+    // Pódio: vencedor no 1º lugar com o troféu, o outro no 2º (de pé, sem drama).
+    vitoria(api) {
+      const { ctx, W, t, vencedor, perdedor } = api;
+      const cfgV = vencedor === 'esquerda' ? api.esq : api.dir;
+      cenario(ctx, W, t);
+      pista(ctx, W, 0);                 // pista parada: a corrida acabou
+      chegada(ctx, W);
+      const base = PISTA.base - 2;
+      degrau(ctx, 140, base - 30, 40, 30, '#f8d030', '1');   // 1º lugar, no meio
+      degrau(ctx, 98, base - 18, 42, 18, '#c8c8d0', '2');    // 2º lugar, à esquerda
+      api.lutador(perdedor, 119, 0.5, base - 18, { pose: 'parado' });
+      api.lutador(vencedor, 154, 0.5, base - 30, { pose: 'comemora' });
+      trofeu(ctx, 176, base - 30, t);
+      hud(api);
+      api.textoVitoria(`${cfgV.nome.toUpperCase()} VENCEU!`, `1º LUGAR · ${api.pctVencedor()}`, 34);
+    },
   };
+
+  function degrau(ctx, x, y, w, h, cor, numero) {
+    ctx.fillStyle = '#2a2a30'; ctx.fillRect(x - 1, y - 1, w + 2, h + 1);
+    ctx.fillStyle = cor; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x, y, w, 2);
+    ctx.font = FONTE; ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#2a2a30'; ctx.fillText(numero, x + w / 2, y + Math.max(3, h / 2 - 4));
+    ctx.textAlign = 'left';
+  }
+
+  // Troféu dourado brilhando, apoiado no degrau do 1º lugar.
+  function trofeu(ctx, x, chao, t) {
+    const ouro = '#f8c830', escuro = '#c89010';
+    ctx.fillStyle = escuro; ctx.fillRect(x - 5, chao - 3, 10, 3);           // base
+    ctx.fillStyle = ouro; ctx.fillRect(x - 1, chao - 8, 2, 5);              // haste
+    ctx.fillRect(x - 5, chao - 18, 10, 10);                                  // taça
+    ctx.fillStyle = escuro; ctx.fillRect(x - 5, chao - 10, 10, 2);
+    ctx.fillStyle = ouro; ctx.fillRect(x - 8, chao - 17, 3, 2); ctx.fillRect(x - 8, chao - 15, 2, 4);   // alças
+    ctx.fillRect(x + 5, chao - 17, 3, 2); ctx.fillRect(x + 6, chao - 15, 2, 4);
+    if (Math.floor(t * 3) % 2) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 3, chao - 16, 1, 3); }
+  }
 
   // Nuvens, morros e árvores rolando em velocidades diferentes (paralaxe).
   function cenario(ctx, W, t) {
@@ -212,7 +250,8 @@ window.ESTILOS = window.ESTILOS || {};
   function hud(api) {
     const { ctx, W } = api;
     const fmt = (v) => (v ? v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '--');
-    const ordem = api.pctEsq >= api.pctDir
+    const esqNaFrente = api.vencedor ? api.vencedor === 'esquerda' : api.pctEsq >= api.pctDir;
+    const ordem = esqNaFrente
       ? [[api.esq, api.pctEsq], [api.dir, api.pctDir]]
       : [[api.dir, api.pctDir], [api.esq, api.pctEsq]];
     ctx.font = FONTE; ctx.textBaseline = 'top'; ctx.textAlign = 'left';

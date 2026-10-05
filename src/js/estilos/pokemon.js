@@ -55,6 +55,21 @@ window.ESTILOS = window.ESTILOS || {};
       }
       caixaTexto(api, mensagens(api));
     },
+
+    // Vencedor comemora na plataforma; o outro fica sentado, com o HP zerado.
+    vitoria(api) {
+      const { vencedor } = api;
+      const cfgV = vencedor === 'esquerda' ? api.esq : api.dir;
+      const pose = (lado) => ({ pose: lado === vencedor ? 'comemora' : 'sentado' });
+      api.lutador('direita', X_DIR, 0.5, CHAO_DIR, pose('direita'));
+      api.lutador('esquerda', X_ESQ, 0.5, CHAO_ESQ, pose('esquerda'));
+      caixaHP(api, 6, 6, esqOuDir(api, 'direita'), vencedor === 'direita' ? 1 : 0);
+      caixaHP(api, 186, 84, esqOuDir(api, 'esquerda'), vencedor === 'esquerda' ? 1 : 0);
+      caixaTexto(api, [
+        `${cfgV.nome.toUpperCase()} venceu a batalha!`,
+        `${cfgV.nome.toUpperCase()}: ${api.pctVencedor().toLowerCase()}`,
+      ]);
+    },
   };
 
   function esqOuDir(api, lado) {
@@ -83,7 +98,7 @@ window.ESTILOS = window.ESTILOS || {};
     ctx.fillStyle = '#f8c838'; ctx.font = '5px "Press Start 2P", monospace'; ctx.fillText('HP', bx - 18, by);
     ctx.fillStyle = '#506058'; ctx.fillRect(bx, by, bw, 4);
     ctx.fillStyle = hp > 0.5 ? '#48c050' : hp > 0.2 ? '#f8c030' : '#e83828';
-    ctx.fillRect(bx, by, Math.max(1, Math.round(bw * hp)), 4);
+    ctx.fillRect(bx, by, Math.round(bw * hp), 4);
     ctx.font = FONTE; ctx.fillStyle = '#303030'; ctx.textAlign = 'right';
     ctx.fillText(pct ? pct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '--', x + w - 6, y + 21);
     ctx.textAlign = 'left';

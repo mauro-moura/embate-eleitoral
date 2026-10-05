@@ -68,7 +68,20 @@ window.ESTILOS = window.ESTILOS || {};
         arremessos(api, mL.x, choque, y, 1, 3 + 5 * pL, esq, 0, X_ESQ, 67);
         arremessos(api, mF.x, choque, y, -1, 3 + 5 * pF, dir, PERIODO / 2, W - X_ESQ, 79);
       }
-      hud(api, Math.max(pL, pF));
+      hud(api, pL / Math.max(pL, pF), pF / Math.max(pL, pF));
+    },
+
+    // Vencedor comemora, o outro sentado no calçadão; barra do perdedor zerada.
+    vitoria(api) {
+      const { ctx, W, t, vencedor } = api;
+      const cfgV = vencedor === 'esquerda' ? api.esq : api.dir;
+      animarFundo(ctx, W, t);
+      for (const lado of ['esquerda', 'direita']) {
+        api.lutador(lado, lado === 'esquerda' ? X_ESQ : W - X_ESQ, 0.5, undefined,
+          { pose: lado === vencedor ? 'comemora' : 'sentado' });
+      }
+      hud(api, vencedor === 'esquerda' ? 1 : 0, vencedor === 'direita' ? 1 : 0);
+      api.textoVitoria(`${cfgV.nome.toUpperCase()} VENCEU!`, api.pctVencedor(), 50);
     },
   };
 
@@ -158,11 +171,11 @@ window.ESTILOS = window.ESTILOS || {};
     ctx.textAlign = 'left';
   }
 
-  function hud(api, topo) {
+  function hud(api, vidaEsq, vidaDir) {
     const { ctx, W } = api;
     const fmt = (v) => (v ? v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '--');
-    barra(ctx, 8, 8, 128, api.pL / topo, 1);
-    barra(ctx, W - 136, 8, 128, api.pF / topo, -1);
+    barra(ctx, 8, 8, 128, vidaEsq, 1);
+    barra(ctx, W - 136, 8, 128, vidaDir, -1);
     // selo KO e o "cronômetro" (urnas apuradas)
     ctx.fillStyle = '#a01818'; ctx.fillRect(W / 2 - 14, 5, 28, 14);
     ctx.fillStyle = '#ffd23f'; ctx.fillRect(W / 2 - 13, 6, 26, 1);
@@ -190,7 +203,7 @@ window.ESTILOS = window.ESTILOS || {};
   function barra(ctx, x, y, w, vida, lado) {
     ctx.fillStyle = '#fff'; ctx.fillRect(x - 1, y - 1, w + 2, 10);
     ctx.fillStyle = '#c01818'; ctx.fillRect(x, y, w, 8);
-    const cheio = Math.max(1, Math.round(w * vida));
+    const cheio = Math.round(w * vida); // pode zerar (vitória)
     ctx.fillStyle = '#f8d020';
     ctx.fillRect(lado > 0 ? x : x + w - cheio, y, cheio, 8);
     ctx.fillStyle = '#fff4a0';

@@ -6,6 +6,8 @@
 //   pose     'dois' (dois braços à frente) ou 'um' (um braço à frente)
 //   fundo(g, api)   desenha o cenário fixo uma vez (canvas próprio)
 //   quadro(api)     desenha o que anima, por cima do cenário (ver api em app.js)
+//   vitoria(api)    opcional: tela de vitória (api.vencedor/perdedor, api.tv = segundos desde
+//                   o início). O app desenha o confete por cima e desliga o tremor.
 window.ESTILOS = window.ESTILOS || {};
 
 (() => {
@@ -68,6 +70,27 @@ window.ESTILOS = window.ESTILOS || {};
       ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(choque, yB, rc + 6, 0, Math.PI * 2); ctx.fill();
       api.bola(choque, yB, rc, { escura: '#ffb000', cor: '#fff3a0' });
       for (let i = 0; i < 3; i++) api.faisca(choque, yB, [esq.clara, dir.clara, '#fff', '#ffd23f'][i % 4]);
+    },
+
+    // A rajada do vencedor engole a do outro e o empurra para longe; depois, comemoração.
+    vitoria(api) {
+      const { W, tv, vencedor, perdedor } = api;
+      const cfgV = vencedor === 'esquerda' ? api.esq : api.dir;
+      const lado = vencedor === 'esquerda' ? 1 : -1;            // para onde o vencedor olha
+      const xV = vencedor === 'esquerda' ? 46 : W - 46;
+      const empurrao = Math.min(1, tv / 1.2);
+      const xP = (vencedor === 'esquerda' ? W - 46 : 46) + lado * Math.round(26 * empurrao);
+      if (tv < 1.6) {
+        api.aura(xV, cfgV, 1);
+        const mV = api.lutador(vencedor, xV, 0.92);
+        api.lutador(perdedor, xP, 0.08, undefined, { pose: empurrao < 1 ? 'dois' : 'sentado' });
+        rajada(api, mV.x, xP - lado * 4, mV.y, 14, cfgV);
+      } else {
+        api.aura(xV, cfgV, 1);
+        api.lutador(vencedor, xV, 0.92, undefined, { pose: 'comemora' });
+        api.lutador(perdedor, xP, 0.08, undefined, { pose: 'sentado' });
+      }
+      api.textoVitoria(`${cfgV.nome.toUpperCase()} VENCEU!`, api.pctVencedor(), 44); // abaixo da bandeira
     },
   };
 

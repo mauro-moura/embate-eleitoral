@@ -77,7 +77,20 @@ window.ESTILOS = window.ESTILOS || {};
         if (temChapeu(dir)) chapeu(api, vooF, choque, y, pF, dir, xF, 74, -1);
         else gelo(api, mF.x, choque, y, pF, dir, W - X_ESQ, ritmo);
       }
-      hud(api, Math.max(pL, pF));
+      hud(api, pL / Math.max(pL, pF), pF / Math.max(pL, pF));
+    },
+
+    // Vencedor comemora (de chapéu, se tiver), o outro de joelhos; sem fatality.
+    vitoria(api) {
+      const { W, vencedor } = api;
+      const cfgV = vencedor === 'esquerda' ? api.esq : api.dir;
+      animarFundo(api);
+      for (const lado of ['esquerda', 'direita']) {
+        api.lutador(lado, lado === 'esquerda' ? X_ESQ : W - X_ESQ, 0.5, PONTE,
+          { pose: lado === vencedor ? 'comemora' : 'sentado' });
+      }
+      hud(api, vencedor === 'esquerda' ? 1 : 0, vencedor === 'direita' ? 1 : 0);
+      api.textoVitoria(`${cfgV.nome.toUpperCase()} VENCEU!`, api.pctVencedor(), 40);
     },
   };
 
@@ -241,11 +254,11 @@ window.ESTILOS = window.ESTILOS || {};
     ctx.textAlign = 'left';
   }
 
-  function hud(api, topo) {
+  function hud(api, vidaEsq, vidaDir) {
     const { ctx, W } = api;
     const fmt = (v) => (v ? v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '--');
-    barra(ctx, 8, 6, 136, api.pL / topo, 1, api.esq.nome.toUpperCase());
-    barra(ctx, W - 144, 6, 136, api.pF / topo, -1, api.dir.nome.toUpperCase());
+    barra(ctx, 8, 6, 136, vidaEsq, 1, api.esq.nome.toUpperCase());
+    barra(ctx, W - 144, 6, 136, vidaDir, -1, api.dir.nome.toUpperCase());
     ctx.font = FONTE; ctx.textBaseline = 'top';
     ctx.textAlign = 'left'; contorno(ctx, fmt(api.pctEsq), 8, 20, '#f0e0a0');
     ctx.textAlign = 'right'; contorno(ctx, fmt(api.pctDir), W - 8, 20, '#f0e0a0');
@@ -264,7 +277,7 @@ window.ESTILOS = window.ESTILOS || {};
   function barra(ctx, x, y, w, vida, lado, nome) {
     ctx.fillStyle = '#d8d0b0'; ctx.fillRect(x - 1, y - 1, w + 2, 12);
     ctx.fillStyle = '#a00808'; ctx.fillRect(x, y, w, 10);
-    const cheio = Math.max(1, Math.round(w * vida));
+    const cheio = Math.round(w * vida); // pode zerar (vitória)
     ctx.fillStyle = '#20b020'; ctx.fillRect(lado > 0 ? x : x + w - cheio, y, cheio, 10);
     ctx.fillStyle = '#60e060'; ctx.fillRect(lado > 0 ? x : x + w - cheio, y + 1, cheio, 2);
     ctx.font = FONTE; ctx.textBaseline = 'top';

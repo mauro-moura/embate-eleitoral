@@ -90,6 +90,21 @@ window.ESTILOS = window.ESTILOS || {};
       // respingos no rio
       if (Math.random() < 0.5) api.faisca(centro + (Math.random() - 0.5) * 20, AGUA, '#9cc8f0', 1.2);
     },
+
+    // Vencedor de pé no meio do rio, comemorando; o outro sentado na água, perto da margem.
+    vitoria(api) {
+      const { ctx, W, t, vencedor, perdedor } = api;
+      const cfgV = vencedor === 'esquerda' ? api.esq : api.dir;
+      const cfgP = vencedor === 'esquerda' ? api.dir : api.esq;
+      cachoeira(ctx, W, t);
+      const xV = W / 2 + (vencedor === 'esquerda' ? -24 : 24);
+      const xP = vencedor === 'esquerda' ? W - 70 : 70;
+      api.aura(xV, cfgV, 1);
+      api.lutador(vencedor, xV, 0.92, undefined, { pose: 'comemora' });
+      api.lutador(perdedor, xP, 0.08, undefined, { pose: 'sentado' });
+      reflexo(ctx, xV, cfgV); reflexo(ctx, xP, cfgP);
+      api.textoVitoria(`${cfgV.nome.toUpperCase()} VENCEU!`, api.pctVencedor(), 40); // abaixo da lua
+    },
   };
 
   function cachoeira(ctx, W, t) {
