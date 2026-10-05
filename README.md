@@ -76,6 +76,7 @@ Todos mostram o % de urnas apuradas na própria cena, então ele aparece também
 | Pokémon | `pokemon` | Tela de batalha de RPG portátil, com caixas de HP (quem lidera tem HP cheio) e caixa de texto. Os nomes dos golpes vêm de `golpes` em `src/js/eleicao.js`. |
 | Street Fighter | `streetfighter` | Fliperama no calçadão de Copacabana, com barras de vida, selo KO e o % apurado no lugar do cronômetro. Os dois trocam bolas de fogo que explodem no ponto de choque; o nome de cada arremesso vem de `golpes`. |
 | Mortal Kombat | `mortalkombat` | Ponte de pedra sobre um poço de espinhos, barras de vida verdes com o nome dentro. Esquerda lança uma lança na corrente, direita lança bolas de gelo; o nome de cada arremesso vem de `golpes`. |
+| Mario Kart | `mariokart` | Corrida: quem tem mais voto vai à frente, com classificação 1º/2º, urnas no lugar das voltas e bandeira de chegada quando a apuração termina. Os karts trocam cascos com os nomes de `golpes`. Aceita sprites próprios do piloto no kart (`spriteKart`, ver PROMPTS.md). |
 
 Para criar outro estilo, copie `src/js/estilos/kamehameha.js`, troque a chave em
 `window.ESTILOS.<nome>`, desenhe o cenário em `fundo()` e a animação em `quadro()`, e adicione o
