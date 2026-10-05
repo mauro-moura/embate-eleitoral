@@ -3,6 +3,8 @@
 # Pode rodar de novo sem medo: para a instância anterior e sobe outra.
 #
 # Uso: ./setup.sh [porta]        (padrão: 8000, ou a última porta usada)
+#
+# Se existir o certificado gerado por ssl/gerar-certificado.sh, o site sobe em HTTPS.
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,6 +13,7 @@ CONF="$DIR/.embate.conf"
 PIDFILE="$DIR/.embate.pid"
 LOG="$DIR/.embate.log"
 UNIT="$HOME/.config/systemd/user/$SERVICO.service"
+SSL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/embate-eleitoral/ssl"
 
 info() { printf '\033[1;33m==>\033[0m %s\n' "$*"; }
 aviso() { printf '\033[1;35mAVISO:\033[0m %s\n' "$*" >&2; }
@@ -56,7 +59,7 @@ nossa_instancia() {
     systemctl --user is-active --quiet "$SERVICO" && return 0
   fi
   [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null \
-    && grep -q http.server "/proc/$(cat "$PIDFILE")/cmdline" 2>/dev/null
+    && grep -qE 'server\.py|http\.server' "/proc/$(cat "$PIDFILE")/cmdline" 2>/dev/null
 }
 
 # Checa a porta ANTES de derrubar o site atual, para não deixá-lo fora do ar à toa.
@@ -78,6 +81,13 @@ rm -f "$PIDFILE"
 echo "PORTA=$PORTA" > "$CONF"
 
 # --- Sobe o servidor -----------------------------------------------------------
+CMD=("$PYTHON" "$DIR/server.py" --porta "$PORTA" --dir "$DIR")
+ESQUEMA=http
+if [[ -f "$SSL_DIR/servidor.crt" && -f "$SSL_DIR/servidor.key" ]]; then
+  CMD+=(--cert "$SSL_DIR/servidor.crt" --key "$SSL_DIR/servidor.key" --ca "$SSL_DIR/ca.crt")
+  ESQUEMA=https
+fi
+
 if tem_systemd; then
   info "Instalando serviço systemd de usuário ($SERVICO)"
   mkdir -p "$(dirname "$UNIT")"
@@ -87,7 +97,7 @@ Description=Embate Eleitoral - site da apuração
 After=network-online.target
 
 [Service]
-ExecStart=$PYTHON -m http.server $PORTA --directory $DIR
+ExecStart=$(printf '"%s" ' "${CMD[@]}")
 Restart=on-failure
 
 [Install]
@@ -104,18 +114,28 @@ EOF
   MODO="serviço systemd (sobe sozinho no boot)"
 else
   aviso "systemd não disponível; rodando em segundo plano (não volta sozinho após reiniciar)"
-  nohup "$PYTHON" -m http.server "$PORTA" --directory "$DIR" > "$LOG" 2>&1 &
+  nohup "${CMD[@]}" > "$LOG" 2>&1 &
   echo $! > "$PIDFILE"
   MODO="processo em segundo plano (PID $(cat "$PIDFILE"), log em .embate.log)"
 fi
 
 # --- Confere se respondeu ---------------------------------------------------------
 for _ in $(seq 1 20); do
-  if "$PYTHON" -c "import urllib.request,sys; urllib.request.urlopen('http://127.0.0.1:$PORTA/', timeout=1)" 2>/dev/null; then
+  if "$PYTHON" - "$ESQUEMA" "$PORTA" "$SSL_DIR/ca.crt" 2>/dev/null <<'PY'
+import ssl, sys, urllib.request
+esquema, porta, ca = sys.argv[1:]
+ctx = ssl.create_default_context(cafile=ca) if esquema == 'https' else None
+urllib.request.urlopen(f'{esquema}://localhost:{porta}/', timeout=1, context=ctx)
+PY
+  then
     IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
-    info "Embate Eleitoral no ar: $MODO"
-    echo "    Neste computador:  http://localhost:$PORTA"
-    [[ -n "$IP" ]] && echo "    Na rede local:     http://$IP:$PORTA"
+    info "Embate Eleitoral no ar ($ESQUEMA): $MODO"
+    echo "    Neste computador:  $ESQUEMA://localhost:$PORTA"
+    [[ -n "$IP" ]] && echo "    Na rede local:     $ESQUEMA://$IP:$PORTA"
+    if [[ "$ESQUEMA" == https ]]; then
+      echo "    Para os navegadores confiarem, instale a CA em cada computador cliente:"
+      echo "      ssl/instalar-ca.sh $ESQUEMA://${IP:-localhost}:$PORTA   (Linux/macOS; Windows: veja o README)"
+    fi
     exit 0
   fi
   sleep 0.5
