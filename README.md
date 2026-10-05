@@ -1,8 +1,8 @@
 # Embate Eleitoral
 
 Projeto de brincadeira para acompanhar a apuração das eleições presidenciais de forma
-descontraída: os candidatos num "embate de Kamehameha" em pixel art, com dados ao vivo do TSE.
-O braço e a rajada de cada um crescem conforme a votação. Sem vínculo com o TSE nem com partidos.
+descontraída: os candidatos num embate de anime em pixel art, com dados ao vivo do TSE.
+O braço e o golpe de cada um crescem conforme a votação. Sem vínculo com o TSE nem com partidos.
 
 Configurado agora para 2026: Lula × Flávio Bolsonaro.
 
@@ -63,6 +63,20 @@ Depois, feche e abra os navegadores e acesse `https://IP-DO-PI:8000`.
 
 Para voltar ao HTTP: apague `~/.local/share/embate-eleitoral/ssl/servidor.*` e rode `./setup.sh`.
 
+## Estilos de embate
+
+Escolha nos botões do topo; a escolha fica salva no navegador e na URL (`?estilo=`).
+
+| Estilo | `?estilo=` | Como é |
+|---|---|---|
+| Kamehameha | `kamehameha` | Cada um dispara uma rajada de longe; quem tem mais voto empurra o ponto de choque. |
+| Rasengan × Chidori | `naruto` | No Vale do Fim, os dois avançam sobre a água e se encontram; quem tem mais voto empurra o outro para trás. Esquerda faz Rasengan, direita faz Chidori. |
+
+Para criar outro estilo, copie `src/js/estilos/kamehameha.js`, troque a chave em
+`window.ESTILOS.<nome>`, desenhe o cenário em `fundo()` e a animação em `quadro()`, e adicione o
+`<script>` no `index.html` (antes do `app.js`). O botão aparece sozinho. O que `quadro()` recebe
+(lutadores, aura, faíscas, linhas etc.) está descrito no objeto `api` de `src/js/app.js`.
+
 ## Widget
 
 Há dois jeitos de deixar a luta num cantinho da tela.
@@ -79,8 +93,9 @@ reaproveita a janela que já estiver aberta.
 | Windows | dois cliques em `widget\embate-widget.bat`, ou `widget\embate-widget.ps1 -Url http://IP-DO-PI:8000` | Chrome, Edge, Brave, Firefox |
 | macOS | `widget/embate-widget.sh --url http://IP-DO-PI:8000` | Chrome, Edge, Brave (ver abaixo) |
 
-Opções: navegador (`--navegador firefox` / `-Navegador firefox`; padrão: o primeiro instalado)
-e tamanho (`--tamanho 480x270` / `-Largura 480 -Altura 270`). Também dá para definir o endereço
+Opções: navegador (`--navegador firefox` / `-Navegador firefox`; padrão: o primeiro instalado),
+tamanho (`--tamanho 480x270` / `-Largura 480 -Altura 270`) e estilo (`--estilo naruto` /
+`-Estilo naruto`). Também dá para definir o endereço
 uma vez com a variável `EMBATE_URL`.
 
 - **Linux:** precisa do `wmctrl` (`sudo apt install wmctrl`). No Wayland, o navegador do widget
@@ -147,7 +162,7 @@ mudanças locais não commitadas.
 `.tools/browsers/`, fora do git (~680 MB):
 
 ```sh
-node .tools/prints.mjs                 # usa http://localhost:8000/
+node .tools/prints.mjs                 # usa https://localhost:8000/
 ```
 
 Para recriar a pasta numa máquina nova:
