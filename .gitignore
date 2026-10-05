@@ -4,3 +4,4 @@
 .embate.log
 .tools/browsers/
 .tools/node_modules/
+__pycache__/
