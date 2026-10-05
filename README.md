@@ -75,7 +75,7 @@ Todos mostram o % de urnas apuradas na própria cena, então ele aparece também
 | Rasengan × Chidori | `naruto` | No Vale do Fim, os dois avançam sobre a água e se encontram; quem tem mais voto empurra o outro para trás. Esquerda faz Rasengan, direita faz Chidori. |
 | Pokémon | `pokemon` | Tela de batalha de RPG portátil, com caixas de HP (quem lidera tem HP cheio) e caixa de texto. Os nomes dos golpes vêm de `golpes` em `src/js/eleicao.js`. |
 | Street Fighter | `streetfighter` | Fliperama no calçadão de Copacabana, com barras de vida, selo KO e o % apurado no lugar do cronômetro. Os dois trocam bolas de fogo que explodem no ponto de choque; o nome de cada arremesso vem de `golpes`. |
-| Mortal Kombat | `mortalkombat` | Ponte de pedra sobre um poço de espinhos, barras de vida verdes com o nome dentro. Esquerda lança uma lança na corrente, direita lança bolas de gelo; o nome de cada arremesso vem de `golpes`. |
+| Mortal Kombat | `mortalkombat` | Ponte de pedra sobre um poço de espinhos, barras de vida verdes com o nome dentro. Quem tem chapéu (`visual.chapeu`) arremessa ele girando, como o Kung Lao; sem chapéu, a esquerda lança uma lança na corrente e a direita bolas de gelo. O nome de cada arremesso vem de `golpes`. |
 | Mario Kart | `mariokart` | Corrida: quem tem mais voto vai à frente, com classificação 1º/2º, urnas no lugar das voltas e bandeira de chegada quando a apuração termina. Os karts trocam cascos com os nomes de `golpes`. Aceita sprites próprios do piloto no kart (`spriteKart`, ver PROMPTS.md). |
 
 Para criar outro estilo, copie `src/js/estilos/kamehameha.js`, troque a chave em
@@ -214,7 +214,7 @@ senão, o 1º.
 
 Tudo o que é da eleição fica em `src/js/eleicao.js`: ano, endereço e códigos do TSE e os dois
 lutadores (`esquerda` e `direita`), cada um com número, nome de exibição, partido, cores, sprite
-e o visual do boneco desenhado pelo código. Os códigos novos saem de
+e o visual do boneco desenhado pelo código (incluindo um chapéu opcional, como o fedora do Lula). Os códigos novos saem de
 `https://resultados.tse.jus.br/oficial/comum/config/ele-c.json` (instruções no próprio arquivo).
 
 ## Ajustes
