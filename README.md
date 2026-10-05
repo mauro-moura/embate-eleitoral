@@ -65,7 +65,9 @@ Para voltar ao HTTP: apague `~/.local/share/embate-eleitoral/ssl/servidor.*` e r
 
 ## Estilos de embate
 
-Escolha nos botões do topo; a escolha fica salva no navegador e na URL (`?estilo=`).
+Escolha no seletor **ESTILO** do topo; a escolha fica salva no navegador e na URL (`?estilo=`).
+Todos mostram o % de urnas apuradas na própria cena, então ele aparece também no widget. O botão
+**TREMOR** liga e desliga o tremor da tela (fica salvo e vale para o widget; na URL, `?tremor=0`).
 
 | Estilo | `?estilo=` | Como é |
 |---|---|---|
@@ -73,6 +75,7 @@ Escolha nos botões do topo; a escolha fica salva no navegador e na URL (`?estil
 | Rasengan × Chidori | `naruto` | No Vale do Fim, os dois avançam sobre a água e se encontram; quem tem mais voto empurra o outro para trás. Esquerda faz Rasengan, direita faz Chidori. |
 | Pokémon | `pokemon` | Tela de batalha de RPG portátil, com caixas de HP (quem lidera tem HP cheio) e caixa de texto. Os nomes dos golpes vêm de `golpes` em `src/js/eleicao.js`. |
 | Street Fighter | `streetfighter` | Fliperama no calçadão de Copacabana, com barras de vida, selo KO e o % apurado no lugar do cronômetro. Os dois trocam bolas de fogo que explodem no ponto de choque; o nome de cada arremesso vem de `golpes`. |
+| Mortal Kombat | `mortalkombat` | Ponte de pedra sobre um poço de espinhos, barras de vida verdes com o nome dentro. Esquerda lança uma lança na corrente, direita lança bolas de gelo; o nome de cada arremesso vem de `golpes`. |
 
 Para criar outro estilo, copie `src/js/estilos/kamehameha.js`, troque a chave em
 `window.ESTILOS.<nome>`, desenhe o cenário em `fundo()` e a animação em `quadro()`, e adicione o
