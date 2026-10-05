@@ -1,7 +1,7 @@
 // Service worker do Embate Eleitoral: deixa o app instalável e abrir offline.
 // Arquivos do site: rede primeiro (nunca fica preso numa versão velha), cache só se offline.
 // Dados do TSE e outras origens passam direto, sem cache.
-const CACHE = 'embate-v1';
+const CACHE = 'embate-v2';
 const ARQUIVOS = [
   './',
   'index.html',
@@ -12,6 +12,7 @@ const ARQUIVOS = [
   'src/js/estilos/kamehameha.js',
   'src/js/estilos/naruto.js',
   'src/js/estilos/pokemon.js',
+  'src/js/estilos/streetfighter.js',
   'src/img/icones/icone-192.png',
   'src/img/icones/icone-512.png',
 ];
