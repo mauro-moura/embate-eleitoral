@@ -72,6 +72,7 @@ Escolha nos botões do topo; a escolha fica salva no navegador e na URL (`?estil
 | Kamehameha | `kamehameha` | Cada um dispara uma rajada de longe; quem tem mais voto empurra o ponto de choque. |
 | Rasengan × Chidori | `naruto` | No Vale do Fim, os dois avançam sobre a água e se encontram; quem tem mais voto empurra o outro para trás. Esquerda faz Rasengan, direita faz Chidori. |
 | Pokémon | `pokemon` | Tela de batalha de RPG portátil, com caixas de HP (quem lidera tem HP cheio) e caixa de texto. Os nomes dos golpes vêm de `golpes` em `src/js/eleicao.js`. |
+| Street Fighter | `streetfighter` | Fliperama no calçadão de Copacabana, com barras de vida, selo KO e o % apurado no lugar do cronômetro. Os dois trocam bolas de fogo que explodem no ponto de choque; o nome de cada arremesso vem de `golpes`. |
 
 Para criar outro estilo, copie `src/js/estilos/kamehameha.js`, troque a chave em
 `window.ESTILOS.<nome>`, desenhe o cenário em `fundo()` e a animação em `quadro()`, e adicione o
