@@ -71,11 +71,31 @@ Escolha nos botões do topo; a escolha fica salva no navegador e na URL (`?estil
 |---|---|---|
 | Kamehameha | `kamehameha` | Cada um dispara uma rajada de longe; quem tem mais voto empurra o ponto de choque. |
 | Rasengan × Chidori | `naruto` | No Vale do Fim, os dois avançam sobre a água e se encontram; quem tem mais voto empurra o outro para trás. Esquerda faz Rasengan, direita faz Chidori. |
+| Pokémon | `pokemon` | Tela de batalha de RPG portátil, com caixas de HP (quem lidera tem HP cheio) e caixa de texto. Os nomes dos golpes vêm de `golpes` em `src/js/eleicao.js`. |
 
 Para criar outro estilo, copie `src/js/estilos/kamehameha.js`, troque a chave em
 `window.ESTILOS.<nome>`, desenhe o cenário em `fundo()` e a animação em `quadro()`, e adicione o
-`<script>` no `index.html` (antes do `app.js`). O botão aparece sozinho. O que `quadro()` recebe
+`<script>` no `index.html` (antes do `app.js`) e na lista `ARQUIVOS` do `sw.js` (para abrir
+offline). O botão aparece sozinho. O que `quadro()` recebe
 (lutadores, aura, faíscas, linhas etc.) está descrito no objeto `api` de `src/js/app.js`.
+
+## App no celular (PWA)
+
+Em `https` (GitHub Pages, ou o Pi com a CA instalada no celular), o site pode ser instalado
+como app: no Chrome/Android, menu **⋮ → Instalar app** (ou "Adicionar à tela inicial"); no
+iPhone, Safari → **Compartilhar → Adicionar à Tela de Início**. Abre em tela cheia, com ícone
+próprio, e abre mesmo sem internet (os dados, claro, precisam de rede).
+
+Widget no celular: nem Android nem iPhone deixam um PWA criar widget de tela inicial, e a
+janela flutuante de página só existe no desktop. Então lá o botão **WIDGET** usa o
+picture-in-picture de **vídeo**: a luta vira um vídeo ao vivo numa janelinha flutuante, como a
+de um player. Limitação: com o navegador em segundo plano, alguns celulares congelam a página,
+e a janelinha para na última imagem até você voltar ao app.
+
+Para o celular confiar na CA do Pi: copie o `ca.crt` para ele (`https://IP-DO-PI:8000/ca.crt`) e
+instale em **Configurações → Segurança → Criptografia e credenciais → Instalar certificado → CA**
+(Android) ou abra o arquivo e depois ative em **Ajustes → Geral → Sobre → Ajustes de Confiança
+de Certificados** (iPhone). Pelo GitHub Pages nada disso é necessário.
 
 ## Widget
 
