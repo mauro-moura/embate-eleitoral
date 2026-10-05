@@ -17,6 +17,29 @@ Rodar o script de novo reinicia o site.
 
 Abrir o `index.html` direto (file://) não funciona, porque o navegador bloqueia as chamadas ao TSE.
 
+## Widget
+
+O botão **WIDGET** tira a luta da página e coloca numa janelinha flutuante que fica por cima
+de todas as outras janelas (dá para redimensionar e arrastar para o canto). Fechando a janelinha,
+a luta volta para a página. Usa a API *Document Picture-in-Picture*: só Chrome, Chromium e Edge
+(versão 116 em diante), e só em `localhost` ou `https`.
+
+Em outros navegadores, o botão abre `?widget` num popup pequeno: a mesma luta, só que sem o
+"sempre por cima". Esse endereço também serve para fonte de navegador no OBS ou para uma
+janela de app: `chromium --app="http://localhost:8000/?widget" --window-size=480,270`.
+
+## Publicar no GitHub Pages
+
+O site é 100% estático e o TSE libera CORS para `github.io`, então funciona direto:
+
+1. Crie um repositório no GitHub e envie a `main`:
+   `git remote add origin git@github.com:<usuario>/<repo>.git && git push -u origin main`
+2. No repositório: **Settings → Pages → Build and deployment → Deploy from a branch**,
+   branch `main`, pasta `/ (root)`.
+3. Em um ou dois minutos o site fica em `https://<usuario>.github.io/<repo>/`.
+
+Todo `git push` na `main` publica a versão nova. O widget PiP também funciona lá (é `https`).
+
 ## Atualizar
 
 ```sh
@@ -25,6 +48,21 @@ Abrir o `index.html` direto (file://) não funciona, porque o navegador bloqueia
 
 Faz `git pull` (se houver remote) e reinicia o site na mesma porta. Recusa rodar se houver
 mudanças locais não commitadas.
+
+## Prints
+
+`.tools/` guarda o script de prints; o Playwright e o Chromium ficam em `.tools/node_modules/` e
+`.tools/browsers/`, fora do git (~680 MB):
+
+```sh
+node .tools/prints.mjs                 # usa http://localhost:8000/
+```
+
+Para recriar a pasta numa máquina nova:
+
+```sh
+cd .tools && npm ci && PLAYWRIGHT_BROWSERS_PATH="$PWD/browsers" npx playwright install chromium
+```
 
 ## Parar / remover
 
