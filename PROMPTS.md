@@ -30,8 +30,9 @@ Super Butouden), 4 animation frames arranged in a single horizontal row, each fr
 square of identical size, evenly spaced, no gaps, no borders, no text, no labels.
 
 Character: caricature of an elderly Brazilian man, short white-gray hair, full short white
-beard, rectangular dark glasses, warm tan skin, navy blue suit, white shirt, red tie, small red
-star pin on the lapel. Friendly but determined expression.
+beard, rectangular dark glasses, warm tan skin, wearing a white fedora hat with a black band,
+navy blue suit, white shirt, red tie, small red star pin on the lapel. Friendly but determined
+expression.
 
 Pose: full body, side view facing RIGHT, wide fighting stance (knees bent, one foot forward),
 both arms stretched straight forward at chest height with palms together and open, like
@@ -109,8 +110,9 @@ no borders, no text, no labels.
 
 Subject: a small go-kart seen from the side, driving to the RIGHT, painted red with darker red
 trim. Driving it, seated, a caricature of an elderly Brazilian man: short white-gray hair, full
-short white beard, rectangular dark glasses, warm tan skin, navy blue suit, white shirt, red
-tie, both hands on the steering wheel, cheerful and determined expression.
+short white beard, rectangular dark glasses, warm tan skin, white fedora hat with a black band,
+navy blue suit, white shirt, red tie, both hands on the steering wheel, cheerful and determined
+expression.
 
 Animation: the 4 frames show the wheels spinning and a slight bounce of the driver.
 
