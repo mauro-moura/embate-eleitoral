@@ -12,6 +12,8 @@ const CFG = {
   exagero: 8,
 };
 const TITULO = 'Embate Eleitoral';
+// ?simular=esquerda|direita mostra a tela de vitória antes da hora (com etiqueta SIMULAÇÃO).
+const SIMULAR = ['esquerda', 'direita'].find((l) => l === new URLSearchParams(location.search).get('simular')) || null;
 
 const UFS = [
   // uf, nome, coluna, linha (posição aproximada no "mapa" em grade)
@@ -160,7 +162,21 @@ function render() {
   if (eleito) { faixa.textContent = `${eleito.nome} VENCEU!`; faixa.hidden = false; }
   else if (vaiPro2) { faixa.textContent = 'VAI TER 2º ROUND!'; faixa.hidden = false; }
   else faixa.hidden = true;
-  api.faixa = faixa.hidden ? '' : faixa.textContent;
+
+  // Tela de vitória: quando o TSE marca um dos dois como "Eleito" (ou na simulação).
+  let vencedor = SIMULAR;
+  if (!vencedor && eleito) {
+    vencedor = eleito.n === CFG.esquerda.numero ? 'esquerda' : eleito.n === CFG.direita.numero ? 'direita' : null;
+  }
+  if (vencedor !== api.vencedor) {
+    api.vencedor = vencedor;
+    api.perdedor = vencedor && (vencedor === 'esquerda' ? 'direita' : 'esquerda');
+    cena.inicioVitoria = api.t;
+  }
+  canvas.parentElement.dataset.vitoria = vencedor ? 'sim' : 'nao';
+  if (SIMULAR) $('meta').textContent = 'SIMULAÇÃO da tela de vitória (?simular=) · ' + $('meta').textContent;
+  // Na vitória a própria cena mostra o resultado; a faixa sai de cena.
+  api.faixa = faixa.hidden || vencedor ? '' : faixa.textContent;
   api.pctEsq = esquerda.pct; api.pctDir = direita.pct; api.apurado = b.apurado;
 
   const fatia = esquerda.votos + direita.votos > 0 ? esquerda.votos / (esquerda.votos + direita.votos) : 0.5;
@@ -268,9 +284,13 @@ function carregarSprite(src) {
 }
 
 // --- Lutador procedural (virado para a direita quando dir = 1) ---
-// pose 'dois': os dois braços à frente; 'um': só o da frente, o outro recolhido.
+// Poses: 'dois' (os dois braços à frente), 'um' (só o da frente, o outro recolhido),
+// 'comemora' (braços para cima, pulando), 'parado' (braços ao lado do corpo) e
+// 'sentado' (no chão, tonto, com estrelinhas). braco/grossura só valem para 'dois' e 'um'.
 // semChapeu: desenha sem o chapéu (ex.: quando o estilo o arremessa).
 function desenharLutador(v, x, dir, braco, grossura, t, pose, chao = CHAO, semChapeu = false) {
+  const pulo = pose === 'comemora' ? Math.round(Math.abs(Math.sin(t * 5)) * 4) : 0;
+  const baixa = pose === 'sentado' ? 14 : 0;   // sentado: corpo mais perto do chão
   const bob = Math.round(Math.sin(t * 7 + (dir > 0 ? 0 : 1.5)) * 0.8);
   const y = chao;
   const r = (dx, dy, w, h, c) => {
@@ -278,11 +298,15 @@ function desenharLutador(v, x, dir, braco, grossura, t, pose, chao = CHAO, semCh
     const px = dir > 0 ? x + dx : x - dx - w;
     ctx.fillRect(Math.round(px), Math.round(y + dy), w, h);
   };
-  const by = (dy) => dy + bob; // parte de cima balança
+  const by = (dy) => dy + bob + baixa - pulo; // parte de cima balança
 
-  // pernas em base de luta
-  r(-11, -19, 5, 17, v.calca); r(-13, -2, 8, 2, '#111');
-  r(4, -19, 5, 17, v.calca); r(4, -2, 9, 2, '#111');
+  // pernas
+  if (pose === 'sentado') {
+    r(-8, -5, 22, 5, v.calca); r(14, -8, 3, 8, '#111');           // esticadas para a frente
+  } else {
+    r(-11, -19 - pulo, 5, 17, v.calca); r(-13, -2 - pulo, 8, 2, '#111');
+    r(4, -19 - pulo, 5, 17, v.calca); r(4, -2 - pulo, 9, 2, '#111');
+  }
   // tronco
   r(-8, by(-38), 16, 20, v.terno);
   r(-8, by(-38), 3, 20, v.ternoEsc);
@@ -308,6 +332,28 @@ function desenharLutador(v, x, dir, braco, grossura, t, pose, chao = CHAO, semCh
   r(4, by(-49), 3, 1, v.sobrancelha);
   r(5, by(-48), 1, 1, '#111'); // olho
   if (v.oculos) { r(3, by(-48), 4, 1, '#222'); r(3, by(-47), 1, 1, '#222'); r(6, by(-47), 1, 1, '#222'); }
+
+  // braços
+  if (pose === 'comemora') {
+    r(6, by(-56), 3, 20, v.terno); r(6, by(-60), 4, 4, v.pele);
+    r(-11, by(-56), 3, 20, v.ternoEsc); r(-12, by(-60), 4, 4, v.pele);
+    return { x: x + dir * 8, y: y + by(-60) };
+  }
+  if (pose === 'parado') {
+    r(6, by(-36), 3, 14, v.terno); r(6, by(-22), 3, 3, v.pele);
+    r(-11, by(-36), 3, 14, v.ternoEsc); r(-11, by(-22), 3, 3, v.peleEsc);
+    return { x: x + dir * 8, y: y + by(-22) };
+  }
+  if (pose === 'sentado') {
+    r(3, by(-32), 9, 3, v.terno); r(12, by(-32), 3, 3, v.pele);    // braço apoiado no joelho
+    // estrelinhas de tontura girando sobre a cabeça
+    ctx.fillStyle = '#ffd23f';
+    for (let k = 0; k < 3; k++) {
+      const a = t * 4 + k * 2.09;
+      ctx.fillRect(Math.round(x + Math.cos(a) * 8), Math.round(y + by(-62) + Math.sin(a) * 2), 2, 2);
+    }
+    return { x: x + dir * 14, y: y + by(-32) };
+  }
   // braços estendidos: COMPRIMENTO e GROSSURA dependem da porcentagem
   r(3, by(-35), braco, grossura, v.terno);
   if (pose === 'um') {
@@ -380,16 +426,19 @@ const api = {
   esq: CFG.esquerda, dir: CFG.direita,
   // Dados da apuração (para estilos que mostram números) e texto da faixa ('' se não houver).
   pctEsq: 0, pctDir: 0, apurado: 0, faixa: '',
+  // Vitória: 'esquerda'/'direita' (ou null), e tv = segundos desde que a vitória começou.
+  vencedor: null, perdedor: null, tv: 0,
   // Desenha o lutador ('esquerda' ou 'direita') com os pés em (x, chao); devolve onde fica a mão da frente.
   // opcoes.semChapeu: desenha sem o chapéu (o estilo está usando o chapéu como golpe).
+  // opcoes.pose: troca a pose do estilo (ex.: 'comemora', 'sentado', 'parado' na vitória).
   lutador(lado, x, p, chao = CHAO, opcoes = {}) {
     const dir = lado === 'esquerda' ? 1 : -1;
     const m = medidas(p);
     const sprite = cena.sprites[lado];
     return sprite
       ? desenharSprite(sprite, x, dir, m.escala, api.t, chao)
-      : desenharLutador(CFG[lado].visual, x, dir, m.braco, m.grossura, api.t, ESTILOS[cena.estilo].pose, chao,
-        opcoes.semChapeu);
+      : desenharLutador(CFG[lado].visual, x, dir, m.braco, m.grossura, api.t,
+        opcoes.pose || ESTILOS[cena.estilo].pose, chao, opcoes.semChapeu);
   },
   // Distância horizontal entre os pés (x) e a mão da frente.
   alcance(lado, p) {
@@ -402,6 +451,26 @@ const api = {
     const a = Math.random() * Math.PI * 2, vel = (0.6 + Math.random() * 1.8) * forca;
     cena.particulas.push({ x, y, vx: Math.cos(a) * vel, vy: Math.sin(a) * vel - 0.3, vida: 30 + Math.random() * 20, cor });
   },
+  // Texto grande de vitória (linha 1 em destaque, linha 2 menor nas cores do vencedor).
+  textoVitoria(linha1, linha2, y = 30) {
+    const cfg = CFG[api.vencedor];
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.font = '16px "Press Start 2P", monospace';
+    ctx.fillStyle = '#000';
+    for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2], [2, 2], [-2, 2], [2, -2], [-2, -2]]) {
+      ctx.fillText(linha1, W / 2 + dx, y + dy);
+    }
+    ctx.fillStyle = '#ffd23f'; ctx.fillText(linha1, W / 2, y);
+    if (linha2) {
+      ctx.font = '8px "Press Start 2P", monospace';
+      ctx.fillStyle = '#000';
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) ctx.fillText(linha2, W / 2 + dx, y + 21 + dy);
+      ctx.fillStyle = cfg.clara; ctx.fillText(linha2, W / 2, y + 21);
+    }
+    ctx.textAlign = 'left';
+  },
+  // "52,31% DOS VOTOS VÁLIDOS" do vencedor.
+  pctVencedor: () => `${fmtPct(api.vencedor === 'esquerda' ? api.pctEsq : api.pctDir)} DOS VOTOS VÁLIDOS`,
   // Sprite do piloto no kart ('esquerda'/'direita'), ou null se não houver arquivo.
   spriteKart: (lado) => cena.spritesKart[lado],
   // Desenha um quadro de sprite com a base em (x, chao); escala 1 = 64px de lado.
@@ -422,10 +491,17 @@ function quadro() {
   api.pL = cena.p; api.pF = 1 - cena.p; api.vivo = cena.vivo;
 
   const estilo = ESTILOS[cena.estilo];
-  const tremor = cena.vivo && cena.tremor ? Math.round(Math.sin(api.t * 45) * 0.6) : 0;
+  const vitoria = !!(api.vencedor && cena.vivo && estilo.vitoria);
+  const tremor = cena.vivo && cena.tremor && !vitoria ? Math.round(Math.sin(api.t * 45) * 0.6) : 0;
   ctx.setTransform(1, 0, 0, 1, tremor, 0);
   ctx.drawImage(fundoDo(cena.estilo), 0, 0);
-  estilo.quadro(api);
+  if (vitoria) {
+    api.tv = api.t - (cena.inicioVitoria ?? api.t);
+    estilo.vitoria(api);
+    confete();
+  } else {
+    estilo.quadro(api);
+  }
 
   cena.particulas = cena.particulas.filter((s) => s.vida-- > 0);
   for (const s of cena.particulas) {
@@ -433,7 +509,26 @@ function quadro() {
     ctx.fillStyle = s.cor; ctx.fillRect(Math.round(s.x), Math.round(s.y), 1, 1);
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  if (cena.vivo && !estilo.apuradoProprio) desenharApurado(estilo.posApurado || { x: W / 2, y: 3 });
+  if (cena.vivo && !estilo.apuradoProprio && !vitoria) desenharApurado(estilo.posApurado || { x: W / 2, y: 3 });
+  if (SIMULAR) {
+    ctx.font = '8px "Press Start 2P", monospace'; ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#c01818'; ctx.fillRect(2, H - 13, 84, 11);
+    ctx.fillStyle = '#ffffff'; ctx.fillText('SIMULAÇÃO', 5, H - 11);
+  }
+}
+
+// Confete nas cores do vencedor, caindo e girando (posição calculada pelo tempo).
+function confete() {
+  const cfg = CFG[api.vencedor];
+  const cores = [cfg.cor, cfg.clara, '#ffd23f', '#ffffff'];
+  for (let i = 0; i < 70; i++) {
+    const vel = 22 + (i % 7) * 6;
+    const y = ((api.tv * vel + i * 37) % (H + 20)) - 10;
+    const x = (i * 53.7 + Math.sin(api.tv * 1.5 + i) * 8) % W;
+    const virado = Math.sin(api.tv * 8 + i) > 0;
+    ctx.fillStyle = cores[i % cores.length];
+    ctx.fillRect(Math.round(x), Math.round(y), virado ? 2 : 1, virado ? 1 : 2);
+  }
 }
 
 // Selo "URNAS xx%" na cena, para aparecer também no widget e no vídeo. Estilos com HUD
@@ -483,7 +578,7 @@ function desenharTelaVideo() {
   g.fillText(`${fmtPct(direita.pct)} ${CFG.direita.nome.toUpperCase()}`, tela.width - 14, 24);
   g.font = '14px "Press Start 2P", monospace'; g.fillStyle = '#ffd23f'; g.textAlign = 'center';
   g.fillText(`URNAS ${fmtPct(api.apurado)}`, tela.width / 2, 24);
-  if (api.faixa) {
+  if (api.faixa) {  // vazio na vitória: a cena já mostra o resultado
     g.font = '18px "Press Start 2P", monospace'; g.textAlign = 'center';
     const larg = g.measureText(api.faixa).width + 28, x = (tela.width - larg) / 2, y = tela.height - 56;
     g.fillStyle = 'rgba(0,0,0,.75)'; g.fillRect(x, y, larg, 40);
