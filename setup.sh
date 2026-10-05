@@ -54,13 +54,31 @@ if tem_systemd && [[ -f "$UNIT_ANTIGA" ]]; then
   systemctl --user daemon-reload
 fi
 
+eh_nosso_servidor() {  # $1 = PID: é server.py/http.server servindo esta pasta?
+  local cmd
+  cmd="$(tr '\0' ' ' < "/proc/$1/cmdline" 2>/dev/null)" || return 1
+  [[ "$cmd" =~ server\.py|http\.server ]] && [[ "$cmd" == *"$DIR"* ]]
+}
+
+# PID de quem escuta na porta (só enxerga processos do próprio usuário).
+pid_na_porta() {
+  ss -ltnpH "sport = :$1" 2>/dev/null | grep -oE 'pid=[0-9]+' | head -1 | cut -d= -f2
+}
+
 nossa_instancia() {
   if tem_systemd && [[ -f "$UNIT" ]]; then
     systemctl --user is-active --quiet "$SERVICO" && return 0
   fi
-  [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null \
-    && grep -qE 'server\.py|http\.server' "/proc/$(cat "$PIDFILE")/cmdline" 2>/dev/null
+  [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null && eh_nosso_servidor "$(cat "$PIDFILE")"
 }
+
+# Instância nossa que o .embate.pid não conhece (ex.: iniciada noutro terminal ou sandbox,
+# onde os PIDs são outros): se escuta na porta e serve esta pasta, assume o controle dela.
+PID_PORTA="$(pid_na_porta "$PORTA" || true)"
+if [[ -n "$PID_PORTA" ]] && ! nossa_instancia && eh_nosso_servidor "$PID_PORTA"; then
+  echo "$PID_PORTA" > "$PIDFILE"
+  PORTA_SALVA="$PORTA"
+fi
 
 # Checa a porta ANTES de derrubar o site atual, para não deixá-lo fora do ar à toa.
 # Só pula a checagem se a porta for a que a nossa própria instância está usando.
