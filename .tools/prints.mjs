@@ -11,7 +11,7 @@ const url = process.argv[2] || 'http://localhost:8000/';
 const pasta = path.resolve(process.argv[3] || path.join(aqui, '..', 'prints'));
 
 const b = await chromium.launch();
-const pronto = (p) => p.waitForFunction(() => document.getElementById('mini-lula').textContent !== '--%', null, { timeout: 30000 });
+const pronto = (p) => p.waitForFunction(() => document.getElementById('mini-esquerda').textContent !== '--%', null, { timeout: 30000 });
 
 for (const [nome, w, h, sufixo] of [['desktop', 1280, 900, ''], ['celular', 400, 860, ''], ['widget', 480, 240, '?widget']]) {
   const p = await b.newPage({ viewport: { width: w, height: h } });

@@ -3,23 +3,14 @@
 // ---------------------------------------------------------------------------
 // Configuração
 // ---------------------------------------------------------------------------
+// Eleição, candidatos e visual ficam em src/js/eleicao.js.
 const CFG = {
-  base: 'https://resultados.tse.jus.br/oficial/ele2026',
-  // Códigos das eleições presidenciais de 2026 (ver /oficial/comum/config/ele-c.json)
-  turnos: { 1: '6257', 2: '6258' },
+  ...window.ELEICAO,
   refreshMs: 30000,
   // Amplia a diferença na cena (47% x 45% quase não aparece). 1 = proporção real.
   exagero: 4,
-  lula: {
-    n: '13', cor: '#e8402e', clara: '#ffb199', escura: '#8f1a0f',
-    // Sprite opcional: tira horizontal de quadros quadrados, virado para a DIREITA.
-    sprite: 'src/img/sprites/lula.png',
-  },
-  flavio: {
-    n: '22', cor: '#2f7bf0', clara: '#a9cbff', escura: '#123b8c',
-    sprite: 'src/img/sprites/flavio.png',
-  },
 };
+const TITULO = 'Embate Eleitoral';
 
 const UFS = [
   // uf, nome, coluna, linha (posição aproximada no "mapa" em grade)
@@ -42,7 +33,7 @@ const fmtInt = (x) => x.toLocaleString('pt-BR');
 
 function urlResultado(turno, uf) {
   const ele = CFG.turnos[turno];
-  return `${CFG.base}/${ele}/dados/${uf}/${uf}-c0001-e${ele.padStart(6, '0')}-u.json`;
+  return `${CFG.base}/${ele}/dados/${uf}/${uf}-c${CFG.cargo}-e${ele.padStart(6, '0')}-u.json`;
 }
 
 async function getJSON(url) {
@@ -74,8 +65,8 @@ function parseResultado(j) {
   const s = j.s || {}, v = j.v || {}, e = j.e || {};
   return {
     cands,
-    lula: byN[CFG.lula.n] || { votos: 0, pct: 0 },
-    flavio: byN[CFG.flavio.n] || { votos: 0, pct: 0 },
+    esquerda: byN[CFG.esquerda.numero] || { votos: 0, pct: 0 },
+    direita: byN[CFG.direita.numero] || { votos: 0, pct: 0 },
     apurado: num(s.pstn),
     data: j.dg, hora: j.hg,
     totalizado: j.tf === 's',
@@ -132,28 +123,28 @@ const $ = (id) => ELS[id];
 
 function render() {
   const b = estado.br;
-  const { lula, flavio } = b;
+  const { esquerda, direita } = b;
 
-  $('pct-lula').textContent = fmtPct(lula.pct);
-  $('pct-flavio').textContent = fmtPct(flavio.pct);
-  $('votos-lula').textContent = fmtInt(lula.votos) + ' votos';
-  $('votos-flavio').textContent = fmtInt(flavio.votos) + ' votos';
-  $('barra-lula').style.width = Math.min(100, lula.pct) + '%';
-  $('barra-flavio').style.width = Math.min(100, flavio.pct) + '%';
+  $('pct-esquerda').textContent = fmtPct(esquerda.pct);
+  $('pct-direita').textContent = fmtPct(direita.pct);
+  $('votos-esquerda').textContent = fmtInt(esquerda.votos) + ' votos';
+  $('votos-direita').textContent = fmtInt(direita.votos) + ' votos';
+  $('barra-esquerda').style.width = Math.min(100, esquerda.pct) + '%';
+  $('barra-direita').style.width = Math.min(100, direita.pct) + '%';
 
   $('apurado').textContent = fmtPct(b.apurado);
   $('barra-apurado').style.width = b.apurado + '%';
   $('meta').textContent = `${estado.turno}º turno · atualizado pelo TSE em ${b.data} às ${b.hora}`
     + (b.totalizado ? ' · totalização encerrada' : '');
 
-  const outros = b.cands.filter((c) => c.n !== CFG.lula.n && c.n !== CFG.flavio.n && c.votos > 0);
+  const outros = b.cands.filter((c) => c.n !== CFG.esquerda.numero && c.n !== CFG.direita.numero && c.votos > 0);
   const extras = outros.map((c) => `<span>${c.nome}: <b>${fmtPct(c.pct)}</b></span>`);
   extras.push(`<span>Brancos: <b>${fmtPct(b.brancos)}</b></span>`, `<span>Nulos: <b>${fmtPct(b.nulos)}</b></span>`,
     `<span>Abstenção: <b>${fmtPct(b.abstencao)}</b></span>`);
   $('extras').innerHTML = extras.join('');
 
-  $('mini-lula').textContent = fmtPct(lula.pct);
-  $('mini-flavio').textContent = fmtPct(flavio.pct);
+  $('mini-esquerda').textContent = fmtPct(esquerda.pct);
+  $('mini-direita').textContent = fmtPct(direita.pct);
   $('mini-apurado').textContent = `${fmtPct(b.apurado)} apurado`;
 
   // Faixa de vencedor / situação
@@ -165,7 +156,7 @@ function render() {
   else if (vaiPro2) { faixa.textContent = 'VAI TER 2º ROUND!'; faixa.hidden = false; }
   else faixa.hidden = true;
 
-  const fatia = lula.votos + flavio.votos > 0 ? lula.votos / (lula.votos + flavio.votos) : 0.5;
+  const fatia = esquerda.votos + direita.votos > 0 ? esquerda.votos / (esquerda.votos + direita.votos) : 0.5;
   cena.alvo = Math.min(0.92, Math.max(0.08, 0.5 + (fatia - 0.5) * CFG.exagero));
   cena.vivo = true;
 
@@ -174,7 +165,7 @@ function render() {
 
 function corLider(c, margem) {
   // Quanto maior a vantagem, mais saturado o tile.
-  const base = c.n === CFG.lula.n ? CFG.lula : c.n === CFG.flavio.n ? CFG.flavio : null;
+  const base = c.n === CFG.esquerda.numero ? CFG.esquerda : c.n === CFG.direita.numero ? CFG.direita : null;
   const t = Math.min(1, 0.35 + margem / 25);
   if (!base) return `rgba(150,150,150,${t})`;
   const [r, g, bl] = base.cor.match(/\w\w/g).map((h) => parseInt(h, 16));
@@ -206,24 +197,25 @@ function renderEstados() {
     const [lid, seg] = r.cands;
     const margem = lid.pct - (seg ? seg.pct : 0);
     if (u.uf !== 'zz') {
-      if (lid.n === CFG.lula.n) vL++;
-      else if (lid.n === CFG.flavio.n) vF++;
+      if (lid.n === CFG.esquerda.numero) vL++;
+      else if (lid.n === CFG.direita.numero) vF++;
     }
     tile.style.background = corLider(lid, margem);
     tile.innerHTML = `<b>${u.uf.toUpperCase()}</b><span>${lid.pct.toFixed(0)}%</span>`;
-    tile.title = `${u.nome} — ${fmtPct(r.apurado)} apurado\nLula ${fmtPct(r.lula.pct)} · Flávio ${fmtPct(r.flavio.pct)}`;
+    tile.title = `${u.nome} — ${fmtPct(r.apurado)} apurado\n${CFG.esquerda.nome} ${fmtPct(r.esquerda.pct)} · ${CFG.direita.nome} ${fmtPct(r.direita.pct)}`;
     mapa.appendChild(tile);
 
     const mini = (c, cor) => `<span class="mini"><i style="width:${c.pct}%;background:${cor}"></i></span>${fmtPct(c.pct)}`;
     linhas.push(`<tr>
       <td>${u.uf.toUpperCase()}</td><td>${u.nome}</td><td>${fmtPct(r.apurado)}</td>
-      <td>${mini(r.lula, CFG.lula.cor)}</td><td>${mini(r.flavio, CFG.flavio.cor)}</td>
+      <td>${mini(r.esquerda, CFG.esquerda.cor)}</td><td>${mini(r.direita, CFG.direita.cor)}</td>
       <td><span class="lider" style="background:${corLider(lid, 99)}">${lid.nome.split(' ')[0]}</span> +${margem.toFixed(margem < 1 ? 2 : 1)}<span class="pp"> pp</span></td>
     </tr>`);
   }
 
   $('tabela').innerHTML = linhas.join('');
-  $('contagem').innerHTML = `<span class="l">Lula na frente em ${vL}</span> · <span class="f">Flávio na frente em ${vF}</span> (de 27 UFs)`;
+  $('contagem').innerHTML = `<span class="l">${CFG.esquerda.nome} na frente em ${vL}</span>`
+    + ` · <span class="f">${CFG.direita.nome} na frente em ${vF}</span> (de 27 UFs)`;
 }
 
 // ---------------------------------------------------------------------------
@@ -232,25 +224,14 @@ function renderEstados() {
 const canvas = $('arena');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height, CHAO = 138;
-const X_LULA = 46, X_FLAVIO = W - 46;
+const X_ESQ = 46, X_DIR = W - 46;
 
 const cena = {
-  alvo: 0.5,     // fatia do Lula entre os dois (0..1)
+  alvo: 0.5,     // fatia do lutador da esquerda entre os dois (0..1)
   p: 0.5,        // valor animado
   vivo: false,   // false até chegar o primeiro dado
   particulas: [],
-  sprites: { lula: null, flavio: null },
-};
-
-const VISUAL = {
-  lula: {
-    terno: '#26335f', ternoEsc: '#18213f', camisa: '#f3f3f3', gravata: '#d4202a', calca: '#1f2a50',
-    pele: '#e0a77f', peleEsc: '#b97d58', cabelo: '#cfd0d4', barba: '#e8e8ea', oculos: true, broche: '#d4202a',
-  },
-  flavio: {
-    terno: '#2b2f3c', ternoEsc: '#1b1e28', camisa: '#f3f3f3', gravata: '#1ea84a', calca: '#22252f',
-    pele: '#f0bf98', peleEsc: '#c9906b', cabelo: '#2a1d14', barba: null, oculos: false, broche: '#2f7bf0',
-  },
+  sprites: { esquerda: null, direita: null },
 };
 
 // Carrega sprite opcional; magenta (#FF00FF) vira transparente (chroma key).
@@ -344,7 +325,7 @@ function desenharLutador(v, x, dir, braco, grossura, t) {
   r(-6, by(-51), 3, 5, v.cabelo);
   if (v.barba) { r(-1, by(-45), 8, 5, v.barba); r(3, by(-44), 3, 1, '#9c5a48'); }
   else { r(4, by(-44), 2, 1, '#8a4636'); }
-  r(4, by(-49), 3, 1, v.cabelo === '#2a1d14' ? v.cabelo : '#8d8d8d'); // sobrancelha
+  r(4, by(-49), 3, 1, v.sobrancelha);
   r(5, by(-48), 1, 1, '#111'); // olho
   if (v.oculos) { r(3, by(-48), 4, 1, '#222'); r(3, by(-47), 1, 1, '#222'); r(6, by(-47), 1, 1, '#222'); }
   // braços estendidos: COMPRIMENTO e GROSSURA dependem da porcentagem
@@ -416,26 +397,26 @@ function quadro() {
   ctx.setTransform(1, 0, 0, 1, tremor, 0);
   ctx.drawImage(fundo, 0, 0);
 
-  aura(X_LULA, CFG.lula, pL, t);
-  aura(X_FLAVIO, CFG.flavio, pF, t + 1);
+  aura(X_ESQ, CFG.esquerda, pL, t);
+  aura(X_DIR, CFG.direita, pF, t + 1);
 
   // Braço vai de 4px (0%) a 26px (100% entre os dois); grossura de 2 a 6.
   const bracoL = Math.round(4 + 22 * pL), bracoF = Math.round(4 + 22 * pF);
   const grossL = Math.round(2 + 4 * pL), grossF = Math.round(2 + 4 * pF);
 
-  const mL = cena.sprites.lula
-    ? desenharSprite(cena.sprites.lula, X_LULA, 1, 0.85 + 0.3 * pL, t)
-    : desenharLutador(VISUAL.lula, X_LULA, 1, bracoL, grossL, t);
-  const mF = cena.sprites.flavio
-    ? desenharSprite(cena.sprites.flavio, X_FLAVIO, -1, 0.85 + 0.3 * pF, t)
-    : desenharLutador(VISUAL.flavio, X_FLAVIO, -1, bracoF, grossF, t);
+  const mL = cena.sprites.esquerda
+    ? desenharSprite(cena.sprites.esquerda, X_ESQ, 1, 0.85 + 0.3 * pL, t)
+    : desenharLutador(CFG.esquerda.visual, X_ESQ, 1, bracoL, grossL, t);
+  const mF = cena.sprites.direita
+    ? desenharSprite(cena.sprites.direita, X_DIR, -1, 0.85 + 0.3 * pF, t)
+    : desenharLutador(CFG.direita.visual, X_DIR, -1, bracoF, grossF, t);
 
   if (cena.vivo) {
     const yB = Math.round((mL.y + mF.y) / 2);
     // Ponto de choque: quem tem mais voto empurra o encontro para o lado do outro.
     const choque = Math.round(mL.x + (mF.x - mL.x) * pL + Math.sin(t * 3) * 1.5);
-    desenharRajada(mL.x, choque, yB, 3 + 9 * pL, CFG.lula, t);
-    desenharRajada(mF.x, choque, yB, 3 + 9 * pF, CFG.flavio, t);
+    desenharRajada(mL.x, choque, yB, 3 + 9 * pL, CFG.esquerda, t);
+    desenharRajada(mF.x, choque, yB, 3 + 9 * pF, CFG.direita, t);
 
     // explosão no ponto de choque
     const rc = 8 + Math.sin(t * 18) * 2;
@@ -446,7 +427,7 @@ function quadro() {
       const a = Math.random() * Math.PI * 2, vel = 0.6 + Math.random() * 1.8;
       cena.particulas.push({
         x: choque, y: yB, vx: Math.cos(a) * vel, vy: Math.sin(a) * vel - 0.3, vida: 30 + Math.random() * 20,
-        cor: [CFG.lula.clara, CFG.flavio.clara, '#fff', '#ffd23f'][i % 4],
+        cor: [CFG.esquerda.clara, CFG.direita.clara, '#fff', '#ffd23f'][i % 4],
       });
     }
   }
@@ -505,7 +486,7 @@ async function abrirWidget() {
       pip.document.head.append(link);
     }
   }
-  pip.document.title = 'Embate 2026';
+  pip.document.title = `${TITULO} ${CFG.ano}`;
   pip.document.body.classList.add('widget');
 
   const lugar = document.createElement('div');
@@ -532,16 +513,32 @@ document.querySelectorAll('.turnos button').forEach((btn) => {
   });
 });
 
-Promise.all([carregarSprite(CFG.lula.sprite), carregarSprite(CFG.flavio.sprite)]).then(([l, f]) => {
-  cena.sprites.lula = l;
-  cena.sprites.flavio = f;
+Promise.all([carregarSprite(CFG.esquerda.sprite), carregarSprite(CFG.direita.sprite)]).then(([l, f]) => {
+  cena.sprites.esquerda = l;
+  cena.sprites.direita = f;
 });
 
 if (new URLSearchParams(location.search).has('widget')) {
   document.body.classList.add('widget');
   // Título único: os lançadores de widget/ acham a janela por ele.
-  document.title = 'Embate 2026 - Widget';
+  document.title = `${TITULO} - Widget`;
+} else {
+  document.title = `${TITULO} ${CFG.ano}`;
 }
+
+// Nomes, partidos e cores vêm de eleicao.js.
+for (const k of ['esquerda', 'direita']) {
+  const c = CFG[k];
+  $(`nome-${k}`).textContent = c.nome.toUpperCase();
+  $(`info-${k}`).textContent = `${c.partido} · ${c.numero}`;
+  $(`mini-nome-${k}`).textContent = c.nome.toUpperCase();
+  $(`th-${k}`).textContent = c.nome;
+  for (const tom of ['cor', 'clara', 'escura']) {
+    document.documentElement.style.setProperty(`--${k}${tom === 'cor' ? '' : '-' + tom}`, c[tom]);
+  }
+}
+$('ano').textContent = CFG.ano;
+canvas.setAttribute('aria-label', `${CFG.esquerda.nome} e ${CFG.direita.nome} disparando rajadas de energia um contra o outro`);
 $('btn-widget').addEventListener('click', abrirWidget);
 
 iniciarLoop(window);

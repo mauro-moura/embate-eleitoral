@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Embate 2026</title>
+  <title>Embate Eleitoral</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
   <link rel="stylesheet" href="src/css/style.css">
@@ -11,7 +11,7 @@
 <body>
   <main class="wrap">
     <header class="topo">
-      <h1>EMBATE <span>2026</span></h1>
+      <h1>EMBATE <span>ELEITORAL</span> <small id="ano"></small></h1>
       <div class="controles">
         <div class="turnos" role="group" aria-label="Turno">
           <button data-turno="auto" class="ativo">AUTO</button>
@@ -25,27 +25,27 @@
 
     <section class="hud" aria-live="polite">
       <div class="lutador esq">
-        <div class="nome"><b id="nome-lula">LULA</b> <small>PT · 13</small></div>
-        <div class="barra"><i id="barra-lula"></i></div>
-        <div class="pct" id="pct-lula">--,--%</div>
-        <div class="votos" id="votos-lula">— votos</div>
+        <div class="nome"><b id="nome-esquerda"></b> <small id="info-esquerda"></small></div>
+        <div class="barra"><i id="barra-esquerda"></i></div>
+        <div class="pct" id="pct-esquerda">--,--%</div>
+        <div class="votos" id="votos-esquerda">— votos</div>
       </div>
       <div class="vs">VS</div>
       <div class="lutador dir">
-        <div class="nome"><small>PL · 22</small> <b id="nome-flavio">FLÁVIO</b></div>
-        <div class="barra"><i id="barra-flavio"></i></div>
-        <div class="pct" id="pct-flavio">--,--%</div>
-        <div class="votos" id="votos-flavio">— votos</div>
+        <div class="nome"><small id="info-direita"></small> <b id="nome-direita"></b></div>
+        <div class="barra"><i id="barra-direita"></i></div>
+        <div class="pct" id="pct-direita">--,--%</div>
+        <div class="votos" id="votos-direita">— votos</div>
       </div>
     </section>
 
     <div class="arena">
-      <canvas id="arena" width="320" height="160" aria-label="Lula e Flávio Bolsonaro disparando rajadas de energia um contra o outro"></canvas>
+      <canvas id="arena" width="320" height="160"></canvas>
       <div class="faixa" id="faixa" hidden></div>
       <div class="mini-placar">
-        <span class="l">LULA <b id="mini-lula">--%</b></span>
+        <span class="l"><span id="mini-nome-esquerda"></span> <b id="mini-esquerda">--%</b></span>
         <span class="ap" id="mini-apurado"></span>
-        <span class="f"><b id="mini-flavio">--%</b> FLÁVIO</span>
+        <span class="f"><b id="mini-direita">--%</b> <span id="mini-nome-direita"></span></span>
       </div>
     </div>
 
@@ -68,7 +68,7 @@
           <thead>
             <tr>
               <th>UF</th><th>Estado</th><th>Apurado</th>
-              <th class="c-lula">Lula</th><th class="c-flavio">Flávio</th><th>Na frente</th>
+              <th class="c-esquerda" id="th-esquerda"></th><th class="c-direita" id="th-direita"></th><th>Na frente</th>
             </tr>
           </thead>
           <tbody id="tabela"></tbody>
@@ -81,6 +81,7 @@
       · atualiza a cada 30s · site de brincadeira, sem vínculo com o TSE
     </footer>
   </main>
+  <script src="src/js/eleicao.js"></script>
   <script src="src/js/app.js"></script>
 </body>
 </html>
