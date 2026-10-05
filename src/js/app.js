@@ -55,7 +55,10 @@ function parseResultado(j) {
         cands.push({
           n: c.n, nome: c.nmu, partido: p.sg,
           votos: +c.vap || 0, pct: num(c.pvapn),
-          eleito: c.e === 's', situacao: c.st || '',
+          // "e" = 's' NÃO quer dizer eleito: após a totalização o TSE marca assim também quem
+          // vai ao 2º turno. Quem decide é a situação: "Eleito", "2º turno", "Não eleito"...
+          eleito: /^eleito/i.test(c.st || ''), segundoTurno: /2º turno/i.test(c.st || ''),
+          situacao: c.st || '',
         });
       }
     }
@@ -150,8 +153,10 @@ function render() {
   // Faixa de vencedor / situação
   const faixa = $('faixa');
   const eleito = b.cands.find((c) => c.eleito);
-  // O TSE não marca "2º turno" no campo de situação; deduz pela apuração completa sem ninguém > 50%.
-  const vaiPro2 = estado.turno === 1 && b.apurado >= 99.99 && !b.cands.some((c) => c.pct > 50);
+  // 2º turno: o TSE marca na situação após totalizar; antes disso, deduz pela apuração completa
+  // sem ninguém com mais de 50% dos válidos (50% + 1 elege no 1º turno).
+  const vaiPro2 = estado.turno === 1 && !eleito && (b.cands.some((c) => c.segundoTurno)
+    || (b.apurado >= 99.99 && !b.cands.some((c) => c.pct > 50)));
   if (eleito) { faixa.textContent = `${eleito.nome} VENCEU!`; faixa.hidden = false; }
   else if (vaiPro2) { faixa.textContent = 'VAI TER 2º ROUND!'; faixa.hidden = false; }
   else faixa.hidden = true;
