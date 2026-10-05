@@ -238,6 +238,7 @@ const cena = {
   vivo: false,   // false até chegar o primeiro dado
   particulas: [],
   sprites: { esquerda: null, direita: null },
+  spritesKart: { esquerda: null, direita: null }, // piloto sentado no kart (estilo mariokart)
   estilo: 'kamehameha',
   tremor: true,
 };
@@ -390,6 +391,10 @@ const api = {
     const a = Math.random() * Math.PI * 2, vel = (0.6 + Math.random() * 1.8) * forca;
     cena.particulas.push({ x, y, vx: Math.cos(a) * vel, vy: Math.sin(a) * vel - 0.3, vida: 30 + Math.random() * 20, cor });
   },
+  // Sprite do piloto no kart ('esquerda'/'direita'), ou null se não houver arquivo.
+  spriteKart: (lado) => cena.spritesKart[lado],
+  // Desenha um quadro de sprite com a base em (x, chao); escala 1 = 64px de lado.
+  sprite: (s, x, dir, escala, chao = CHAO) => desenharSprite(s, x, dir, escala, api.t, chao),
   linha(x0, y0, x1, y1, cor) {
     ctx.fillStyle = cor;
     const passos = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
@@ -557,10 +562,10 @@ document.querySelectorAll('[data-turno]').forEach((btn) => {
   });
 });
 
-Promise.all([carregarSprite(CFG.esquerda.sprite), carregarSprite(CFG.direita.sprite)]).then(([l, f]) => {
-  cena.sprites.esquerda = l;
-  cena.sprites.direita = f;
-});
+for (const lado of ['esquerda', 'direita']) {
+  carregarSprite(CFG[lado].sprite).then((s) => { cena.sprites[lado] = s; });
+  if (CFG[lado].spriteKart) carregarSprite(CFG[lado].spriteKart).then((s) => { cena.spritesKart[lado] = s; });
+}
 
 if (new URLSearchParams(location.search).has('widget')) {
   document.body.classList.add('widget');
