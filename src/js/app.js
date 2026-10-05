@@ -478,6 +478,13 @@ function iniciarLoop(win) {
 async function abrirWidget() {
   if (!('documentPictureInPicture' in window)) {
     window.open('?widget', 'embate-widget', 'popup,width=480,height=270');
+    const dica = $('dica-widget');
+    dica.textContent = window.isSecureContext
+      ? 'Este navegador não tem janela flutuante (só Chrome/Edge 116+). Abri um popup comum. '
+        + 'Para fixar no topo e em todos os ambientes de trabalho, use o lançador da pasta widget/ (veja o README).'
+      : 'A janela flutuante só funciona em https ou localhost, e este endereço é http. Abri um popup comum. '
+        + 'Para fixar no topo e em todos os ambientes de trabalho, use o lançador da pasta widget/ (veja o README).';
+    dica.hidden = false;
     return;
   }
   if (documentPictureInPicture.window) { documentPictureInPicture.window.focus(); return; }
@@ -530,7 +537,11 @@ Promise.all([carregarSprite(CFG.lula.sprite), carregarSprite(CFG.flavio.sprite)]
   cena.sprites.flavio = f;
 });
 
-if (new URLSearchParams(location.search).has('widget')) document.body.classList.add('widget');
+if (new URLSearchParams(location.search).has('widget')) {
+  document.body.classList.add('widget');
+  // Título único: os lançadores de widget/ acham a janela por ele.
+  document.title = 'Embate 2026 - Widget';
+}
 $('btn-widget').addEventListener('click', abrirWidget);
 
 iniciarLoop(window);

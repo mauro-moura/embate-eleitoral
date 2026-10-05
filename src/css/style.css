@@ -41,6 +41,7 @@ h1 span { color: var(--ouro); }
   border: 2px solid var(--borda); box-shadow: 2px 2px 0 #000;
 }
 .btn-widget { color: var(--ouro); border-color: var(--ouro); }
+.dica-widget { margin: 8px 0 0; padding: 8px 10px; border: 2px solid var(--ouro); color: var(--ouro); background: var(--painel); }
 .turnos button.ativo { color: #000; background: var(--ouro); border-color: var(--ouro); }
 
 /* HUD estilo jogo de luta */
