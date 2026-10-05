@@ -149,7 +149,6 @@ function render() {
 
   $('mini-esquerda').textContent = fmtPct(esquerda.pct);
   $('mini-direita').textContent = fmtPct(direita.pct);
-  $('mini-apurado').textContent = `${fmtPct(b.apurado)} apurado`;
 
   // Faixa de vencedor / situação
   const faixa = $('faixa');
@@ -240,6 +239,7 @@ const cena = {
   particulas: [],
   sprites: { esquerda: null, direita: null },
   estilo: 'kamehameha',
+  tremor: true,
 };
 
 // Carrega sprite opcional; magenta (#FF00FF) vira transparente (chroma key).
@@ -405,16 +405,30 @@ function quadro() {
   cena.p += (cena.alvo - cena.p) * 0.03;
   api.pL = cena.p; api.pF = 1 - cena.p; api.vivo = cena.vivo;
 
-  const tremor = cena.vivo ? Math.round(Math.sin(api.t * 45) * 0.6) : 0;
+  const estilo = ESTILOS[cena.estilo];
+  const tremor = cena.vivo && cena.tremor ? Math.round(Math.sin(api.t * 45) * 0.6) : 0;
   ctx.setTransform(1, 0, 0, 1, tremor, 0);
   ctx.drawImage(fundoDo(cena.estilo), 0, 0);
-  ESTILOS[cena.estilo].quadro(api);
+  estilo.quadro(api);
 
   cena.particulas = cena.particulas.filter((s) => s.vida-- > 0);
   for (const s of cena.particulas) {
     s.x += s.vx; s.y += s.vy; s.vy += 0.04;
     ctx.fillStyle = s.cor; ctx.fillRect(Math.round(s.x), Math.round(s.y), 1, 1);
   }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (cena.vivo && !estilo.apuradoProprio) desenharApurado(estilo.posApurado || { x: W / 2, y: 3 });
+}
+
+// Selo "URNAS xx%" na cena, para aparecer também no widget e no vídeo. Estilos com HUD
+// próprio (apuradoProprio) desenham o deles; posApurado muda o lugar (centro, topo).
+function desenharApurado({ x, y }) {
+  const texto = `URNAS ${fmtPct(api.apurado)}`;
+  ctx.font = '8px "Press Start 2P", monospace'; ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+  const larg = Math.ceil(ctx.measureText(texto).width) + 6;
+  ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(Math.round(x - larg / 2), y, larg, 11);
+  ctx.fillStyle = '#ffd23f'; ctx.fillText(texto, x, y + 2);
+  ctx.textAlign = 'left';
 }
 
 // O loop roda na janela onde a arena está: com a aba em segundo plano, o
@@ -451,6 +465,8 @@ function desenharTelaVideo() {
   g.fillText(`${CFG.esquerda.nome.toUpperCase()} ${fmtPct(esquerda.pct)}`, 14, 24);
   g.fillStyle = CFG.direita.cor; g.textAlign = 'right';
   g.fillText(`${fmtPct(direita.pct)} ${CFG.direita.nome.toUpperCase()}`, tela.width - 14, 24);
+  g.font = '14px "Press Start 2P", monospace'; g.fillStyle = '#ffd23f'; g.textAlign = 'center';
+  g.fillText(`URNAS ${fmtPct(api.apurado)}`, tela.width / 2, 24);
   if (api.faixa) {
     g.font = '18px "Press Start 2P", monospace'; g.textAlign = 'center';
     const larg = g.measureText(api.faixa).width + 28, x = (tela.width - larg) / 2, y = tela.height - 56;
@@ -486,7 +502,7 @@ async function abrirWidget() {
     try { await abrirWidgetVideo(); return; } catch { /* cai no popup abaixo */ }
   }
   if (!('documentPictureInPicture' in window)) {
-    window.open(`?widget&estilo=${cena.estilo}`, 'embate-widget', 'popup,width=480,height=270');
+    window.open(`?widget&estilo=${cena.estilo}${cena.tremor ? '' : '&tremor=0'}`, 'embate-widget', 'popup,width=480,height=270');
     const dica = $('dica-widget');
     dica.textContent = window.isSecureContext
       ? 'Este navegador não tem janela flutuante (só Chrome/Edge 116+). Abri um popup comum. '
@@ -574,23 +590,36 @@ function escolherEstilo(id) {
   canvas.parentElement.dataset.estilo = id;
   // Estilos com placar próprio na cena escondem a faixa e o mini-placar em HTML (via CSS).
   canvas.parentElement.dataset.placarProprio = ESTILOS[id].placarProprio ? 'sim' : 'nao';
-  document.querySelectorAll('.estilos button').forEach((b) => b.classList.toggle('ativo', b.dataset.estilo === id));
-  try { localStorage.setItem('estilo', id); } catch { /* sem storage: só não lembra */ }
-  const url = new URL(location.href);
-  url.searchParams.set('estilo', id);
-  history.replaceState(null, '', url);
+  $('estilo').value = id;
+  lembrar('estilo', id);
 }
 
-for (const [id, e] of Object.entries(ESTILOS)) {
-  const b = document.createElement('button');
-  b.dataset.estilo = id;
-  b.textContent = e.nome;
-  b.addEventListener('click', () => escolherEstilo(id));
-  $('estilos').append(b);
+// Tremor da tela: liga/desliga; ?tremor=0 na URL (widget) > último escolhido > ligado.
+function escolherTremor(ligado) {
+  cena.tremor = ligado;
+  $('btn-tremor').textContent = `TREMOR: ${ligado ? 'SIM' : 'NÃO'}`;
+  $('btn-tremor').setAttribute('aria-pressed', String(ligado));
+  lembrar('tremor', ligado ? '1' : '0');
 }
-let salvo = null;
-try { salvo = localStorage.getItem('estilo'); } catch { /* idem */ }
-escolherEstilo(new URLSearchParams(location.search).get('estilo') || salvo);
+
+// Guarda a escolha no navegador e na URL (para links e widget abrirem igual).
+function lembrar(chave, valor) {
+  try { localStorage.setItem(chave, valor); } catch { /* sem storage: só não lembra */ }
+  const url = new URL(location.href);
+  url.searchParams.set(chave, valor);
+  history.replaceState(null, '', url);
+}
+function lido(chave) {
+  const daUrl = new URLSearchParams(location.search).get(chave);
+  if (daUrl !== null) return daUrl;
+  try { return localStorage.getItem(chave); } catch { return null; }
+}
+
+for (const [id, e] of Object.entries(ESTILOS)) $('estilo').append(new Option(e.nome, id));
+$('estilo').addEventListener('change', (e) => escolherEstilo(e.target.value));
+$('btn-tremor').addEventListener('click', () => escolherTremor(!cena.tremor));
+escolherEstilo(lido('estilo'));
+escolherTremor(lido('tremor') !== '0');
 $('btn-widget').addEventListener('click', abrirWidget);
 
 iniciarLoop(window);

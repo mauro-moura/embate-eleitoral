@@ -41,12 +41,18 @@ h1 small { font-size: .5em; color: var(--apagado); }
 
 .controles { display: flex; flex-wrap: wrap; gap: 6px; }
 .turnos { display: flex; gap: 6px; }
-.turnos button, .btn-widget {
+.turnos button, .btn-widget, .btn-opcao, .seletor {
   font-size: 10px; padding: 8px 10px; cursor: pointer;
   background: var(--painel); color: var(--apagado);
   border: 2px solid var(--borda); box-shadow: 2px 2px 0 #000;
 }
 .btn-widget { color: var(--ouro); border-color: var(--ouro); }
+.btn-opcao { cursor: pointer; }
+.btn-opcao[aria-pressed="false"] { color: var(--apagado); }
+.seletor { font-family: var(--pixel); display: inline-flex; align-items: center; gap: 6px; color: var(--apagado); cursor: default; padding: 4px 6px; }
+.seletor select {
+  font: inherit; font-size: 11px; color: #000; background: var(--ouro); border: 0; padding: 4px 6px; cursor: pointer;
+}
 .dica-widget { margin: 8px 0 0; padding: 8px 10px; border: 2px solid var(--ouro); color: var(--ouro); background: var(--painel); }
 .turnos button.ativo { color: #000; background: var(--ouro); border-color: var(--ouro); }
 
@@ -87,7 +93,6 @@ h1 small { font-size: .5em; color: var(--apagado); }
 .mini-placar b { font-size: 13px; }
 .mini-placar .l { color: var(--esquerda); }
 .mini-placar .f { color: var(--direita); }
-.mini-placar .ap { font-family: var(--mono); font-size: 15px; color: var(--apagado); }
 
 .arena-destacada {
   border: 3px dashed var(--borda); padding: 40px 16px; text-align: center; color: var(--apagado);

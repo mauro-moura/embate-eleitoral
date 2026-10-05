@@ -25,7 +25,8 @@
           <button data-turno="1">1º TURNO</button>
           <button data-turno="2">2º TURNO</button>
         </div>
-        <div class="turnos estilos" id="estilos" role="group" aria-label="Estilo do embate"></div>
+        <label class="seletor">ESTILO <select id="estilo"></select></label>
+        <button id="btn-tremor" class="btn-opcao" aria-pressed="true">TREMOR: SIM</button>
         <button id="btn-widget" class="btn-widget" title="Abre a luta numa janelinha que fica por cima das outras">WIDGET</button>
       </div>
     </header>
@@ -52,7 +53,6 @@
       <div class="faixa" id="faixa" hidden></div>
       <div class="mini-placar">
         <span class="l"><span id="mini-nome-esquerda"></span> <b id="mini-esquerda">--%</b></span>
-        <span class="ap" id="mini-apurado"></span>
         <span class="f"><b id="mini-direita">--%</b> <span id="mini-nome-direita"></span></span>
       </div>
     </div>
