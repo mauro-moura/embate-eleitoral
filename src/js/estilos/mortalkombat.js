@@ -10,8 +10,8 @@ window.ESTILOS = window.ESTILOS || {};
   const X_ESQ = 58;
   const PONTE = 138;                   // topo da ponte (onde os pés pisam)
   const FONTE = '8px "Press Start 2P", monospace';
-  const LANCA = { ciclo: 1.6, vel: 150, segura: 0.15 };
-  const GELO = { periodo: 0.8, bolas: 3, vel: 90, explosao: 0.35 };
+  const LANCA = { vel: 150, segura: 0.15, descanso: 0.4 };
+  const GELO = { vel: 90, explosao: 0.35 };
   const CHAPEU = { vel: 130, segura: 0.12, descanso: 0.45 };
 
   window.ESTILOS.mortalkombat = {
@@ -61,6 +61,10 @@ window.ESTILOS = window.ESTILOS || {};
       // Chapéu em voo é calculado antes, para desenhar o lutador sem ele na cabeça.
       const choque0 = xL + api.alcance('esquerda', pL) + ((xF - api.alcance('direita', pF)) - (xL + api.alcance('esquerda', pL))) * pL;
       const yGolpe = PONTE - 31;
+      // Ritmo do golpe da esquerda (chapéu ou lança); o da direita bate no mesmo instante.
+      const ritmo = temChapeu(esq)
+        ? ritmoChapeu(xL + 1, PONTE - 55, choque0, yGolpe)
+        : ritmoLanca(choque0 - (xL + api.alcance('esquerda', pL)));
       const vooL = api.vivo && temChapeu(esq) ? voo(t, xL + 1, PONTE - 55, choque0, yGolpe) : null;
       const vooF = api.vivo && temChapeu(dir) ? voo(t + 0.9, xF - 1, PONTE - 55, choque0, yGolpe) : null;
       const mL = api.lutador('esquerda', xL, pL, PONTE, { semChapeu: !!vooL });
@@ -69,9 +73,9 @@ window.ESTILOS = window.ESTILOS || {};
         const y = Math.round((mL.y + mF.y) / 2);
         const choque = mL.x + (mF.x - mL.x) * pL;
         if (temChapeu(esq)) chapeu(api, vooL, choque, y, pL, esq, xL, 62, 1);
-        else lanca(api, mL.x, choque, y, pL, esq, X_ESQ);
+        else lanca(api, mL.x, choque, y, pL, esq, X_ESQ, ritmo);
         if (temChapeu(dir)) chapeu(api, vooF, choque, y, pF, dir, xF, 74, -1);
-        else gelo(api, mF.x, choque, y, pF, dir, W - X_ESQ);
+        else gelo(api, mF.x, choque, y, pF, dir, W - X_ESQ, ritmo);
       }
       hud(api, Math.max(pL, pF));
     },
@@ -79,8 +83,19 @@ window.ESTILOS = window.ESTILOS || {};
 
   const temChapeu = (cfg) => !!(cfg.visual && cfg.visual.chapeu);
 
+  function ritmoLanca(dist) {
+    const ida = Math.max(0.05, dist / LANCA.vel);
+    return { impacto: ida, ciclo: ida + LANCA.segura + ida * 0.6 + LANCA.descanso };
+  }
+
   // Voo do chapéu no instante t (bumerangue): sai da cabeça em arco, bate no choque e volta.
   // null quando está descansando na cabeça.
+  // Ciclo e instante do impacto do chapéu (o gelo do outro lado se sincroniza com isso).
+  function ritmoChapeu(x0, y0, x1, y1) {
+    const ida = Math.hypot(x1 - x0, y1 - y0) / CHAPEU.vel;
+    return { impacto: ida, ciclo: ida + CHAPEU.segura + ida * 0.7 + CHAPEU.descanso };
+  }
+
   function voo(t, x0, y0, x1, y1) {
     const ida = Math.hypot(x1 - x0, y1 - y0) / CHAPEU.vel, volta = ida * 0.7;
     const ciclo = ida + CHAPEU.segura + volta + CHAPEU.descanso;
@@ -153,11 +168,11 @@ window.ESTILOS = window.ESTILOS || {};
   }
 
   // Lança presa numa corrente: vai até o choque, segura e volta. Uma por vez.
-  function lanca(api, x0, choque, y, p, cfg, xPes) {
+  function lanca(api, x0, choque, y, p, cfg, xPes, ritmo) {
     const { ctx, t } = api;
     const dist = Math.abs(choque - x0);
-    const ida = dist / LANCA.vel, volta = ida * 0.6;
-    const fase = t % LANCA.ciclo;
+    const ida = ritmo.impacto, volta = ida * 0.6;
+    const fase = t % ritmo.ciclo;
     let alcance;
     if (fase < ida) alcance = fase / ida;
     else if (fase < ida + LANCA.segura) alcance = 1;
@@ -182,38 +197,37 @@ window.ESTILOS = window.ESTILOS || {};
       api.bola(choque, y, 3 + 4 * p, { escura: cfg.escura, cor: '#ffb040' });
       api.faisca(choque, y, cfg.clara, 1.5);
     }
-    if (fase < 0.6) nomeDoGolpe(api, cfg, xPes, Math.floor(t / LANCA.ciclo), 62);
+    if (fase < 0.6) nomeDoGolpe(api, cfg, xPes, Math.floor(t / ritmo.ciclo), 62);
   }
 
-  // Bolas de gelo em sequência; estilhaçam ao chegar no choque.
-  function gelo(api, x0, choque, y, p, cfg, xPes) {
+  // Uma bola de gelo por ciclo, lançada na hora certa para chegar ao choque junto com o
+  // golpe do outro lado (ritmo.impacto): os golpes colidem no ar.
+  function gelo(api, x0, choque, y, p, cfg, xPes, ritmo) {
     const { ctx, t } = api;
     const viagem = Math.max(0.05, Math.abs(choque - x0) / GELO.vel);
-    const ciclo = GELO.periodo * GELO.bolas;
+    const inicio = ritmo.impacto - viagem;
     const r = 3 + 4 * p;
-    for (let n = 0; n < GELO.bolas; n++) {
-      const idade = (t + 0.4 + n * GELO.periodo) % ciclo;
-      if (idade < viagem) {
-        const x = x0 - GELO.vel * idade;
-        ctx.globalAlpha = 0.35; ctx.fillStyle = cfg.clara;   // névoa atrás
-        ctx.beginPath(); ctx.arc(x + r * 1.4, y, r * 0.8, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1;
-        api.bola(x, y, r, cfg);
-        ctx.fillStyle = '#ffffff';                            // cristais
-        for (let k = 0; k < 4; k++) {
-          const a = t * 6 + k * Math.PI / 2;
-          ctx.fillRect(Math.round(x + Math.cos(a) * (r + 2)), Math.round(y + Math.sin(a) * (r + 2)), 1, 1);
-        }
-        if (idade < 0.6) nomeDoGolpe(api, cfg, xPes, Math.floor((t + 0.4 + n * GELO.periodo) / ciclo) + n, 74);
-      } else if (idade < viagem + GELO.explosao) {
-        const prog = (idade - viagem) / GELO.explosao;
-        ctx.globalAlpha = 1 - prog;
-        for (let k = 0; k < 8; k++) {
-          const a = k * Math.PI / 4 + 0.3;
-          api.linha(choque, y, choque + Math.cos(a) * (r + prog * 10), y + Math.sin(a) * (r + prog * 10), k % 2 ? '#ffffff' : cfg.clara);
-        }
-        ctx.globalAlpha = 1;
+    const idade = (((t - inicio) % ritmo.ciclo) + ritmo.ciclo) % ritmo.ciclo;
+    if (idade < viagem) {
+      const x = x0 - GELO.vel * idade;
+      ctx.globalAlpha = 0.35; ctx.fillStyle = cfg.clara;   // névoa atrás
+      ctx.beginPath(); ctx.arc(x + r * 1.4, y, r * 0.8, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      api.bola(x, y, r, cfg);
+      ctx.fillStyle = '#ffffff';                            // cristais
+      for (let k = 0; k < 4; k++) {
+        const a = t * 6 + k * Math.PI / 2;
+        ctx.fillRect(Math.round(x + Math.cos(a) * (r + 2)), Math.round(y + Math.sin(a) * (r + 2)), 1, 1);
       }
+      if (idade < 0.6) nomeDoGolpe(api, cfg, xPes, Math.floor((t - inicio) / ritmo.ciclo), 74);
+    } else if (idade < viagem + GELO.explosao) {
+      const prog = (idade - viagem) / GELO.explosao;
+      ctx.globalAlpha = 1 - prog;
+      for (let k = 0; k < 8; k++) {
+        const a = k * Math.PI / 4 + 0.3;
+        api.linha(choque, y, choque + Math.cos(a) * (r + prog * 10), y + Math.sin(a) * (r + prog * 10), k % 2 ? '#ffffff' : cfg.clara);
+      }
+      ctx.globalAlpha = 1;
     }
   }
 
