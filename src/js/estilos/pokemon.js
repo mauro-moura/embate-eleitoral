@@ -17,6 +17,7 @@ window.ESTILOS = window.ESTILOS || {};
     descricao: 'numa batalha de RPG, trocando golpes',
     pose: 'dois',
     placarProprio: true, // a cena já mostra nomes, HP e mensagens
+    posApurado: { x: 70, y: 42 }, // selo de urnas abaixo da caixa de HP de cima
 
     fundo(g, { W, H }) {
       const faixas = ['#b8e0f8', '#c8e8f0', '#d8f0e8', '#e0f0d0', '#d0e8b0', '#c0e0a0'];
@@ -102,8 +103,7 @@ window.ESTILOS = window.ESTILOS || {};
       `${api.dir.nome.toUpperCase()} usou ${golpe(api.dir, 'HIDRO BOMBA')}!`,
       `${lider.nome.toUpperCase()} está na frente!`,
     ];
-    if (api.faixa) m.push(api.faixa);
-    else m.push(`Urnas apuradas: ${api.apurado.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`);
+    m.push(`Urnas apuradas: ${api.apurado.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`);
     return m;
   }
 
@@ -116,9 +116,14 @@ window.ESTILOS = window.ESTILOS || {};
     const visiveis = Math.floor((t % 3.5) * 30);
     const texto = msgs[i].slice(0, visiveis);
     ctx.font = FONTE; ctx.textBaseline = 'top'; ctx.fillStyle = '#383838';
-    // quebra em até duas linhas de 36 caracteres
-    const linhas = quebrar(texto, 36);
-    linhas.slice(0, 2).forEach((l, n) => ctx.fillText(l, 12, CAIXA_Y + 11 + n * 11));
+    if (api.faixa) {
+      // Resultado fica parado na primeira linha; as mensagens seguem na segunda.
+      ctx.fillStyle = '#c84838'; ctx.fillText(api.faixa, 12, CAIXA_Y + 11);
+      ctx.fillStyle = '#383838'; ctx.fillText(quebrar(texto, 36)[0], 12, CAIXA_Y + 22);
+    } else {
+      // quebra em até duas linhas de 36 caracteres
+      quebrar(texto, 36).slice(0, 2).forEach((l, n) => ctx.fillText(l, 12, CAIXA_Y + 11 + n * 11));
+    }
     if (visiveis >= msgs[i].length && Math.floor(t * 3) % 2) {
       ctx.fillStyle = '#c84838'; ctx.fillRect(W - 18, H - 13, 5, 3); ctx.fillRect(W - 17, H - 10, 3, 1);
     }

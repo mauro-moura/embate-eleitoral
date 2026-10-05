@@ -20,6 +20,7 @@ window.ESTILOS = window.ESTILOS || {};
     descricao: 'trocando bolas de fogo num fliperama no calçadão de Copacabana',
     pose: 'dois',
     placarProprio: true,
+    apuradoProprio: true, // o % apurado já fica no lugar do cronômetro
 
     fundo(g, { W, H }) {
       // pôr do sol
@@ -43,11 +44,12 @@ window.ESTILOS = window.ESTILOS || {};
       g.fillStyle = '#d8d0c0'; g.fillRect(0, 110, W, 2);
       for (let x = 2; x < W; x += 10) g.fillRect(x, 110, 1, 12);
       g.fillRect(0, 115, W, 1);
-      // ondas do calçadão de Copacabana
+      // ondas do calçadão de Copacabana: largas e com contraste suave, para não
+      // tremeluzir (moiré) com o tremor da tela
       for (let y = PISO; y < H; y++) {
         for (let x = 0; x < W; x++) {
-          const onda = Math.floor((y + Math.sin(x * 0.19) * 3.2) / 3.5) % 2;
-          g.fillStyle = onda ? '#f2ede2' : '#262626';
+          const onda = Math.floor((y + Math.sin(x * 0.11) * 4) / 6) % 2;
+          g.fillStyle = onda ? '#d9d2c3' : '#4a4642';
           g.fillRect(x, y, 1, 1);
         }
       }
@@ -62,8 +64,9 @@ window.ESTILOS = window.ESTILOS || {};
       if (api.vivo) {
         const y = Math.round((mL.y + mF.y) / 2);
         const choque = mL.x + (mF.x - mL.x) * pL;
-        arremessos(api, mL.x, choque, y, 1, 3 + 5 * pL, esq, 0, X_ESQ);
-        arremessos(api, mF.x, choque, y, -1, 3 + 5 * pF, dir, PERIODO / 2, W - X_ESQ);
+        // nomes dos golpes em alturas diferentes, para não se encostarem
+        arremessos(api, mL.x, choque, y, 1, 3 + 5 * pL, esq, 0, X_ESQ, 67);
+        arremessos(api, mF.x, choque, y, -1, 3 + 5 * pF, dir, PERIODO / 2, W - X_ESQ, 79);
       }
       hud(api, Math.max(pL, pF));
     },
@@ -98,7 +101,7 @@ window.ESTILOS = window.ESTILOS || {};
 
   // Bolas de fogo saindo da mão (x0) até o choque; explodem ao chegar. Sem estado: a posição
   // de cada bola sai do tempo.
-  function arremessos(api, x0, choque, y, dir, raio, cfg, fase, xPes) {
+  function arremessos(api, x0, choque, y, dir, raio, cfg, fase, xPes, yNome) {
     const { t } = api;
     const viagem = Math.max(0.05, Math.abs(choque - x0) / VELOCIDADE);
     const ciclo = PERIODO * BOLAS;
@@ -106,7 +109,7 @@ window.ESTILOS = window.ESTILOS || {};
       const idade = (t + fase + n * PERIODO) % ciclo;
       if (idade < viagem) {
         bolaDeFogo(api, x0 + dir * VELOCIDADE * idade, y, raio, cfg, dir);
-        if (idade < 0.6) nomeDoGolpe(api, cfg, xPes, Math.floor((t + fase + n * PERIODO) / ciclo) + n);
+        if (idade < 0.6) nomeDoGolpe(api, cfg, xPes, Math.floor((t + fase + n * PERIODO) / ciclo) + n, yNome);
       } else if (idade < viagem + EXPLOSAO) {
         explosao(api, choque, y, (idade - viagem) / EXPLOSAO, raio, cfg);
       }
@@ -143,7 +146,7 @@ window.ESTILOS = window.ESTILOS || {};
     if (prog < 0.15) api.faisca(x, y, cfg.clara, 1.4);
   }
 
-  function nomeDoGolpe(api, cfg, x, n) {
+  function nomeDoGolpe(api, cfg, x, n, y) {
     const { ctx, W } = api;
     const lista = cfg.golpes && cfg.golpes.length ? cfg.golpes : ['HADOUKEN'];
     const texto = lista[((n % lista.length) + lista.length) % lista.length] + '!';
@@ -151,12 +154,12 @@ window.ESTILOS = window.ESTILOS || {};
     const larg = ctx.measureText(texto).width;
     const cx = Math.min(W - larg / 2 - 4, Math.max(larg / 2 + 4, x));
     ctx.textAlign = 'center';
-    contorno(ctx, texto, cx, 67, cfg.clara);
+    contorno(ctx, texto, cx, y, cfg.clara);
     ctx.textAlign = 'left';
   }
 
   function hud(api, topo) {
-    const { ctx, W, t } = api;
+    const { ctx, W } = api;
     const fmt = (v) => (v ? v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%' : '--');
     barra(ctx, 8, 8, 128, api.pL / topo, 1);
     barra(ctx, W - 136, 8, 128, api.pF / topo, -1);
@@ -173,8 +176,8 @@ window.ESTILOS = window.ESTILOS || {};
     ctx.textAlign = 'right';
     contorno(ctx, `${fmt(api.pctDir)} ${api.dir.nome.toUpperCase()}`, W - 8, 20, '#f8f0c0');
     ctx.textAlign = 'left';
-    // anúncio de round piscando
-    if (api.faixa && Math.floor(t * 2) % 2 === 0) {
+    // resultado (ex.: VAI TER 2º ROUND!) parado no meio da tela
+    if (api.faixa) {
       ctx.font = FONTE; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       const larg = ctx.measureText(api.faixa).width + 14;
       ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(W / 2 - larg / 2, 44, larg, 14);
